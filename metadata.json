@@ -1,0 +1,6 @@
+{
+  "name": "VicRenovation",
+  "description": "Professionele ramen en deuren, interieurrenovaties en HSB-panelen met interactieve configurator, 3-talige ondersteuning en beheerderspaneel.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,24 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Gallery collection
+    match /gallery/{id} {
+      allow read, write: if true;
+    }
+    
+    // Transformations collection
+    match /transformations/{id} {
+      allow read, write: if true;
+    }
+    
+    // Quotes collection
+    match /quotes/{id} {
+      allow read, write: if true;
+    }
+    
+    // Profiles collection
+    match /profiles/{id} {
+      allow read, write: if true;
+    }
+  }
+}

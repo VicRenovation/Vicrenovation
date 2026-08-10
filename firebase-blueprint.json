@@ -1,0 +1,60 @@
+{
+  "entities": {
+    "gallery": {
+      "title": "Gallery Item",
+      "description": "Projects and works gallery items",
+      "properties": {
+        "title": { "type": "string", "description": "Project title" },
+        "category": { "type": "string", "description": "Category key" },
+        "imageUrl": { "type": "string", "description": "Primary image URL" },
+        "additionalImages": { "type": "array", "items": { "type": "string" }, "description": "Secondary images" },
+        "videoUrl": { "type": "string", "description": "Video URL" },
+        "location": { "type": "string", "description": "Project location" },
+        "year": { "type": "string", "description": "Completion year" },
+        "description": { "type": "string", "description": "Detailed description" },
+        "tags": { "type": "array", "items": { "type": "string" }, "description": "Search tags" },
+        "createdAt": { "type": "string", "description": "ISO timestamp" }
+      },
+      "required": ["title", "category", "imageUrl"]
+    },
+    "transformations": {
+      "title": "Transformation Project",
+      "description": "Before and After transformation sliders",
+      "properties": {
+        "title": { "type": "string", "description": "Transformation title" },
+        "category": { "type": "string", "description": "Category key" },
+        "beforeImageUrl": { "type": "string", "description": "Before image URL" },
+        "afterImageUrl": { "type": "string", "description": "After image URL" },
+        "beforeLabel": { "type": "string", "description": "Before label text" },
+        "afterLabel": { "type": "string", "description": "After label text" },
+        "description": { "type": "string", "description": "Description" },
+        "location": { "type": "string", "description": "Location" },
+        "createdAt": { "type": "string", "description": "ISO timestamp" }
+      },
+      "required": ["title", "beforeImageUrl", "afterImageUrl"]
+    },
+    "quotes": {
+      "title": "Quote Request",
+      "description": "Customer incoming renovation price requests",
+      "properties": {
+        "clientName": { "type": "string", "description": "Client full name" },
+        "email": { "type": "string", "description": "Client email" },
+        "phone": { "type": "string", "description": "Client phone number" },
+        "city": { "type": "string", "description": "Client city" },
+        "serviceCategory": { "type": "string", "description": "Requested service" },
+        "details": { "type": "object", "description": "Calculator parameters" },
+        "preferredDate": { "type": "string", "description": "Preferred contact/visit date" },
+        "status": { "type": "string", "description": "Quote process status" },
+        "createdAt": { "type": "string", "description": "ISO timestamp" }
+      },
+      "required": ["clientName", "phone"]
+    },
+    "profiles": {
+      "title": "Profile Customizations",
+      "description": "Window profile image custom overrides",
+      "properties": {
+        "imageUrl": { "type": "string", "description": "Custom image URL for window profile" }
+      }
+    }
+  }
+}
