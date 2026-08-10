@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { LanguageProvider } from './components/LanguageContext';
 import { Header } from './components/Header';
 import { Hero } from './components/Hero';
@@ -105,6 +106,9 @@ export default function App() {
 
         {/* Footer */}
         <Footer />
+
+        {/* Vercel Web Analytics */}
+        <Analytics />
 
       </div>
     </LanguageProvider>
