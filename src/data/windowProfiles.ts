@@ -152,7 +152,7 @@ export const WINDOW_PROFILES: WindowProfile[] = [
     soundInsulationDb: 46,
     waterTightnessClass: 'Class 9A (600 Pa)',
     windLoadClass: 'Class C5 / B5',
-    defaultImage: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80',
+    defaultImage: '/images/profiles/wds_8s.png',
     availableColors: COLOR_FINISHES,
     idealFor: {
       nl: 'Passiefhuizen, lage-energiewoningen en luxe privéwoningen met maximale warmtebesparing.',
@@ -200,7 +200,7 @@ export const WINDOW_PROFILES: WindowProfile[] = [
     soundInsulationDb: 42,
     waterTightnessClass: 'Class 8A',
     windLoadClass: 'Class C4',
-    defaultImage: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80',
+    defaultImage: '/images/profiles/wds_7s.png',
     availableColors: COLOR_FINISHES,
     idealFor: {
       nl: 'Eengezinswoningen, moderne appartementen en elegante gevelrenovaties.',
@@ -245,7 +245,7 @@ export const WINDOW_PROFILES: WindowProfile[] = [
     soundInsulationDb: 40,
     waterTightnessClass: 'Class 8A',
     windLoadClass: 'Class C4',
-    defaultImage: 'https://images.unsplash.com/photo-1600565193348-f74bd3c7ccdf?auto=format&fit=crop&w=1200&q=80',
+    defaultImage: '/images/profiles/wds_6s.png',
     availableColors: COLOR_FINISHES,
     idealFor: {
       nl: 'Appartementen, stadswoningen en renovaties met maximale natuurlijke lichtinval.',
@@ -290,7 +290,7 @@ export const WINDOW_PROFILES: WindowProfile[] = [
     soundInsulationDb: 38,
     waterTightnessClass: 'Class 7A',
     windLoadClass: 'Class C3',
-    defaultImage: 'https://images.unsplash.com/photo-1509644851169-2acc08aa25b5?auto=format&fit=crop&w=1200&q=80',
+    defaultImage: '/images/profiles/wds_5s.png',
     availableColors: COLOR_FINISHES,
     idealFor: {
       nl: 'Balkonbeglazing, loggia’s, standaard appartementen en voordelige renovaties.',

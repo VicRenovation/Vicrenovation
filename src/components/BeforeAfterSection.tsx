@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLanguage } from './LanguageContext';
 import { TransformationItem } from '../types';
-import { SlidersHorizontal, Sparkles, MapPin, CheckCircle2 } from 'lucide-react';
+import { SlidersHorizontal, Sparkles, CheckCircle2 } from 'lucide-react';
 import { INITIAL_TRANSFORMATIONS } from '../data/initialTransformations';
 import { fetchTransformationsFromFirestore } from '../lib/firestoreService';
 
@@ -11,9 +11,9 @@ export const BeforeAfterSection: React.FC = () => {
   const [transformations, setTransformations] = useState<TransformationItem[]>(() => {
     try {
       const cached = localStorage.getItem('vr_transformations_cache');
-      return cached ? JSON.parse(cached) : INITIAL_TRANSFORMATIONS;
+      return cached !== null ? JSON.parse(cached) : [];
     } catch (e) {
-      return INITIAL_TRANSFORMATIONS;
+      return [];
     }
   });
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -36,7 +36,7 @@ export const BeforeAfterSection: React.FC = () => {
     const fetchTransformations = async () => {
       try {
         const data = await fetchTransformationsFromFirestore();
-        if (Array.isArray(data) && data.length > 0) {
+        if (Array.isArray(data)) {
           setTransformations(data);
           try {
             localStorage.setItem('vr_transformations_cache', JSON.stringify(data));
@@ -48,7 +48,7 @@ export const BeforeAfterSection: React.FC = () => {
     };
 
     fetchTransformations();
-    const interval = setInterval(fetchTransformations, 4000);
+    const interval = setInterval(fetchTransformations, 3000);
     return () => clearInterval(interval);
   }, []);
 
@@ -120,12 +120,6 @@ export const BeforeAfterSection: React.FC = () => {
           <h3 className="text-xl font-bold text-white flex items-center justify-center gap-2">
             <span>{currentItem.title}</span>
           </h3>
-          {currentItem.location && (
-            <p className="text-xs text-emerald-400 font-semibold flex items-center justify-center gap-1">
-              <MapPin className="h-3.5 w-3.5" />
-              <span>{currentItem.location}</span>
-            </p>
-          )}
           {currentItem.description && (
             <p className="text-xs text-slate-300 max-w-xl mx-auto pt-1">
               {currentItem.description}
@@ -142,29 +136,29 @@ export const BeforeAfterSection: React.FC = () => {
             onTouchMove={handleTouchMove}
             className="relative h-[380px] sm:h-[480px] lg:h-[540px] w-full rounded-3xl overflow-hidden border-2 border-slate-800 bg-slate-950 shadow-2xl cursor-ew-resize select-none group"
           >
-            {/* After Image (Background & Object-Contain Foreground) */}
+            {/* After Image */}
             <div className="absolute inset-0 flex items-center justify-center overflow-hidden bg-slate-950">
               <img
                 src={currentItem.afterImageUrl}
-                alt={`${currentItem.title} - After`}
-                className="absolute inset-0 h-full w-full object-cover blur-2xl opacity-20 scale-110 pointer-events-none"
+                alt=""
+                className="absolute inset-0 h-full w-full object-cover blur-2xl opacity-30 scale-110 pointer-events-none"
               />
               <img
                 src={currentItem.afterImageUrl}
                 alt={`${currentItem.title} - After`}
-                className="relative h-full w-full object-contain z-0"
+                className="relative h-full w-full object-contain z-10"
               />
             </div>
 
             {/* After Badge */}
             <div className="absolute top-4 right-4 z-20 rounded-xl bg-emerald-500 px-3.5 py-1.5 text-xs font-black text-slate-950 uppercase shadow-xl flex items-center gap-1.5 whitespace-nowrap pointer-events-none">
               <CheckCircle2 className="h-3.5 w-3.5" />
-              <span>{t('afterLabel')} — {currentItem.afterLabel || 'Na Renovatie'}</span>
+              <span>{t('afterLabel') || 'NA'}</span>
             </div>
 
             {/* Before Badge */}
             <div className="absolute top-4 left-4 z-20 rounded-xl bg-slate-950/90 px-3.5 py-1.5 text-xs font-bold text-slate-200 uppercase border border-slate-700 shadow-xl whitespace-nowrap pointer-events-none">
-              <span>{t('beforeLabel')} — {currentItem.beforeLabel || 'Vooraf'}</span>
+              <span>{t('beforeLabel') || 'VOOR'}</span>
             </div>
 
             {/* Before Image (Clipped container) */}
@@ -178,13 +172,13 @@ export const BeforeAfterSection: React.FC = () => {
               >
                 <img
                   src={currentItem.beforeImageUrl}
-                  alt={`${currentItem.title} - Before`}
-                  className="absolute inset-0 h-full w-full object-cover blur-2xl opacity-20 scale-110 pointer-events-none"
+                  alt=""
+                  className="absolute inset-0 h-full w-full object-cover blur-2xl opacity-30 scale-110 pointer-events-none"
                 />
                 <img
                   src={currentItem.beforeImageUrl}
                   alt={`${currentItem.title} - Before`}
-                  className="relative h-full w-full object-contain z-0"
+                  className="relative h-full w-full object-contain z-10"
                 />
               </div>
             </div>
@@ -236,19 +230,21 @@ export const BeforeAfterSection: React.FC = () => {
                 >
                   <div className="space-y-2">
                     {/* Side by side mini thumbnails */}
-                    <div className="grid grid-cols-2 gap-1.5 h-24 rounded-xl overflow-hidden relative">
-                      <div className="relative h-full w-full">
-                        <img src={item.beforeImageUrl} alt="Before" className="h-full w-full object-cover" />
-                        <span className="absolute bottom-1 left-1 text-[8px] bg-rose-950/90 text-rose-300 px-1 py-0.5 rounded font-bold uppercase">Voor</span>
+                    <div className="grid grid-cols-2 gap-1.5 h-28 rounded-xl overflow-hidden relative bg-slate-950 p-1 border border-slate-800/80">
+                      <div className="relative h-full w-full flex items-center justify-center overflow-hidden bg-slate-900 rounded-lg">
+                        <img src={item.beforeImageUrl} alt="" className="absolute inset-0 h-full w-full object-cover blur-sm opacity-30 pointer-events-none" />
+                        <img src={item.beforeImageUrl} alt="Before" className="relative max-h-full max-w-full object-contain z-10" />
+                        <span className="absolute bottom-1 left-1 z-20 text-[8px] bg-slate-950/90 border border-slate-700 text-slate-200 px-1.5 py-0.5 rounded font-black uppercase tracking-wider">Voor</span>
                       </div>
-                      <div className="relative h-full w-full">
-                        <img src={item.afterImageUrl} alt="After" className="h-full w-full object-cover" />
-                        <span className="absolute bottom-1 right-1 text-[8px] bg-emerald-950/90 text-emerald-300 px-1 py-0.5 rounded font-bold uppercase">Na</span>
+                      <div className="relative h-full w-full flex items-center justify-center overflow-hidden bg-slate-900 rounded-lg">
+                        <img src={item.afterImageUrl} alt="" className="absolute inset-0 h-full w-full object-cover blur-sm opacity-30 pointer-events-none" />
+                        <img src={item.afterImageUrl} alt="After" className="relative max-h-full max-w-full object-contain z-10" />
+                        <span className="absolute bottom-1 right-1 z-20 text-[8px] bg-emerald-500 text-slate-950 px-1.5 py-0.5 rounded font-black uppercase tracking-wider">Na</span>
                       </div>
                     </div>
 
                     <div className="font-bold text-xs text-white truncate">{item.title}</div>
-                    <div className="text-[10px] text-slate-400 line-clamp-1">{item.description || item.location}</div>
+                    {item.description && <div className="text-[10px] text-slate-400 line-clamp-1">{item.description}</div>}
                   </div>
 
                   <div className="pt-2 text-[10px] font-bold text-emerald-400 flex items-center justify-between">

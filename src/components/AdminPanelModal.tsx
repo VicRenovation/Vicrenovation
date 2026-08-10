@@ -48,10 +48,10 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
 
   // Profiles custom images state
   const [profileImages, setProfileImages] = useState<Record<string, string>>({
-    wds_8s: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80',
-    wds_7s: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=80',
-    wds_6s: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=1200&q=80',
-    wds_5s: 'https://images.unsplash.com/photo-1509644851169-2acc08aa25b5?auto=format&fit=crop&w=1200&q=80',
+    wds_8s: '/images/profiles/wds_8s.png',
+    wds_7s: '/images/profiles/wds_7s.png',
+    wds_6s: '/images/profiles/wds_6s.png',
+    wds_5s: '/images/profiles/wds_5s.png',
   });
   const [saveProfileMsg, setSaveProfileMsg] = useState('');
 
@@ -61,8 +61,8 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
   const [transCategory, setTransCategory] = useState<ServiceCategory>('windows');
   const [transBeforeImageUrl, setTransBeforeImageUrl] = useState('');
   const [transAfterImageUrl, setTransAfterImageUrl] = useState('');
-  const [transBeforeLabel, setTransBeforeLabel] = useState('Vooraf');
-  const [transAfterLabel, setTransAfterLabel] = useState('Na Renovatie');
+  const [transBeforeLabel, setTransBeforeLabel] = useState('Înainte');
+  const [transAfterLabel, setTransAfterLabel] = useState('După');
   const [transLocation, setTransLocation] = useState('');
   const [transDescription, setTransDescription] = useState('');
   const [isAddingTrans, setIsAddingTrans] = useState(false);
@@ -142,7 +142,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === 'vic2026' || password === 'admin' || password === 'vic') {
+    if (password.trim() === 'RenitaVicRenovation' || password === 'vic2026' || password === 'admin' || password === 'vic') {
       setIsAuthenticated(true);
       setAuthError(false);
     } else {
@@ -157,7 +157,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
   // Server File Upload Helper (Uploads images/videos to /api/upload)
   const uploadFileToServer = async (file: File): Promise<string> => {
     setIsUploading(true);
-    setUploadStatus('Bestand uploaden naar server...');
+    setUploadStatus('Se încarcă fișierul pe server...');
     try {
       const formData = new FormData();
       formData.append('file', file);
@@ -168,7 +168,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
       });
 
       if (!res.ok) {
-        throw new Error(`Upload mislukt status ${res.status}`);
+        throw new Error(`Încărcare eșuată status ${res.status}`);
       }
 
       const data = await res.json();
@@ -304,8 +304,8 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
       category: transCategory,
       beforeImageUrl: transBeforeImageUrl,
       afterImageUrl: transAfterImageUrl,
-      beforeLabel: transBeforeLabel || 'Vooraf',
-      afterLabel: transAfterLabel || 'Na Renovatie',
+      beforeLabel: 'Voor',
+      afterLabel: 'Na',
       location: transLocation || 'Benelux',
       description: transDescription,
       createdAt: new Date().toISOString(),
@@ -322,8 +322,8 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
       setTransTitle('');
       setTransBeforeImageUrl('');
       setTransAfterImageUrl('');
-      setTransBeforeLabel('Vooraf');
-      setTransAfterLabel('Na Renovatie');
+      setTransBeforeLabel('Voor');
+      setTransAfterLabel('Na');
       setTransLocation('');
       setTransDescription('');
     } catch (err) {
@@ -442,7 +442,9 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-950">
           <div className="flex items-center gap-2">
             <Shield className="h-5 w-5 text-emerald-400" />
-            <h3 className="text-base font-bold text-white">{t('adminModalTitle')}</h3>
+            <h3 className="text-base font-bold text-white">
+              {isAuthenticated ? 'Panou de Administrare VicRenovation' : 'Beheerderspaneel VicRenovation'}
+            </h3>
           </div>
 
           <button
@@ -462,7 +464,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
 
             <div className="space-y-1">
               <h4 className="text-lg font-bold text-white">Beheerders Login</h4>
-              <p className="text-xs text-slate-400">{t('adminLoginPrompt')}</p>
+              <p className="text-xs text-slate-400">Voer het wachtwoord in om projecten en offertes te beheren.</p>
             </div>
 
             <form onSubmit={handleLogin} className="space-y-4">
@@ -471,14 +473,14 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder={t('adminPasswordPlaceholder')}
+                placeholder="Voer wachtwoord in"
                 className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
               />
 
               {authError && (
                 <div className="text-xs text-rose-400 flex items-center justify-center gap-1">
                   <AlertCircle className="h-3.5 w-3.5" />
-                  <span>{t('adminWrongPassword')}</span>
+                  <span>Onjuist wachtwoord. Probeer het opnieuw.</span>
                 </div>
               )}
 
@@ -486,7 +488,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
                 type="submit"
                 className="w-full rounded-xl bg-emerald-500 py-3 text-sm font-bold text-slate-950 hover:bg-emerald-400 transition-all shadow-lg"
               >
-                {t('adminLoginBtn')}
+                Inloggen als Beheerder
               </button>
             </form>
           </div>
@@ -505,7 +507,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
                 }`}
               >
                 <ImageIcon className="h-4 w-4" />
-                <span>{t('adminTabGallery')} ({galleryItems.length})</span>
+                <span>Galerie Proiecte ({galleryItems.length})</span>
               </button>
 
               <button
@@ -517,7 +519,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
                 }`}
               >
                 <SlidersHorizontal className="h-4 w-4" />
-                <span>{t('adminTabTransformations')} ({transformations.length})</span>
+                <span>Transformări Înainte / După ({transformations.length})</span>
               </button>
 
               <button
@@ -529,7 +531,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
                 }`}
               >
                 <FileText className="h-4 w-4" />
-                <span>{t('adminTabQuotes')} ({quotes.length})</span>
+                <span>Cereri de Ofertă ({quotes.length})</span>
               </button>
             </div>
 
@@ -541,7 +543,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
                 {isUploading && (
                   <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold animate-pulse shadow-lg">
                     <div className="h-4 w-4 rounded-full border-2 border-emerald-400 border-t-transparent animate-spin shrink-0" />
-                    <span>{uploadStatus || 'Bestand / Video uploaden naar server...'}</span>
+                    <span>{uploadStatus || 'Se încarcă fișierul / videoclipul pe server...'}</span>
                   </div>
                 )}
 
@@ -549,49 +551,49 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
                 <div className="rounded-2xl border border-slate-800 bg-slate-950 p-5 space-y-4">
                   <h4 className="text-sm font-bold text-emerald-400 flex items-center gap-2">
                     <Plus className="h-4 w-4" />
-                    {t('adminAddPhotoTitle')}
+                    Adaugă Proiect Nou în Galerie
                   </h4>
 
                   <form onSubmit={handleAddPhoto} className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="text-xs font-semibold text-slate-300">{t('adminPhotoTitle')} *</label>
+                        <label className="text-xs font-semibold text-slate-300">Titlu Proiect *</label>
                         <input
                           type="text"
                           required
                           value={newTitle}
                           onChange={(e) => setNewTitle(e.target.value)}
-                          placeholder="bijv. Nieuwe WDS 8S Montage Antwerpen"
+                          placeholder="ex. Montaj Tâmplărie WDS 8S Anvers"
                           className="mt-1 w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
                         />
                       </div>
 
                       <div>
-                        <label className="text-xs font-semibold text-slate-300">{t('adminPhotoCategory')} *</label>
+                        <label className="text-xs font-semibold text-slate-300">Categorie *</label>
                         <select
                           value={newCategory}
                           onChange={(e) => setNewCategory(e.target.value as ServiceCategory)}
                           className="mt-1 w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2.5 text-xs text-white focus:border-emerald-500 focus:outline-none"
                         >
-                          <option value="windows">{t('filterWindows')}</option>
-                          <option value="interior">{t('filterInterior')}</option>
-                          <option value="hsb">{t('filterHSB')}</option>
+                          <option value="windows">Uși & Ferestre</option>
+                          <option value="interior">Renovări Interioare</option>
+                          <option value="hsb">Panouri HSB (Cadru Lemn)</option>
                         </select>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="text-xs font-semibold text-slate-300">Hoofdfoto URL (Cover) *</label>
+                        <label className="text-xs font-semibold text-slate-300">URL Foto Principală (Copertă) *</label>
                         <div className="mt-1 flex items-center gap-2">
                           <input
                             type="text"
                             value={newImageUrl}
                             onChange={(e) => setNewImageUrl(e.target.value)}
-                            placeholder="https://... of upload bestand 👉"
+                            placeholder="https://... sau încarcă fișier 👉"
                             className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
                           />
-                          <label className="cursor-pointer rounded-xl border border-slate-700 bg-slate-800 p-2.5 text-slate-300 hover:text-white" title="Upload van PC">
+                          <label className="cursor-pointer rounded-xl border border-slate-700 bg-slate-800 p-2.5 text-slate-300 hover:text-white" title="Încarcă din PC">
                             <Upload className="h-4 w-4" />
                             <input type="file" accept="image/*" onChange={handleGalleryFileUpload} className="hidden" />
                           </label>
@@ -599,12 +601,12 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
                       </div>
 
                       <div>
-                        <label className="text-xs font-semibold text-slate-300">{t('adminPhotoLocation')}</label>
+                        <label className="text-xs font-semibold text-slate-300">Locație</label>
                         <input
                           type="text"
                           value={newLocation}
                           onChange={(e) => setNewLocation(e.target.value)}
-                          placeholder="bijv. Gent, België"
+                          placeholder="ex. Anvers, Belgia"
                           className="mt-1 w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
                         />
                       </div>
@@ -614,7 +616,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
                     <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-3.5 space-y-3">
                       <label className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
                         <ImageIcon className="h-3.5 w-3.5" />
-                        Extra Foto's Toevoegen aan Dit Project (Meerdere Foto's)
+                        Adaugă Fotografii Suplimentare la Proiect (Fotografii de Proces)
                       </label>
                       
                       <div className="flex items-center gap-2">
@@ -622,7 +624,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
                           type="text"
                           value={newAddImgInput}
                           onChange={(e) => setNewAddImgInput(e.target.value)}
-                          placeholder="Extra foto URL (bijv. detailfoto, procesfoto)..."
+                          placeholder="URL foto suplimentară (ex. foto detaliu, foto proces)..."
                           className="flex-1 rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none"
                         />
                         <button
@@ -634,7 +636,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
                         </button>
                         <label className="cursor-pointer rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-xs text-slate-300 hover:text-white flex items-center gap-1 shrink-0">
                           <Upload className="h-3.5 w-3.5" />
-                          <span>+ Upload</span>
+                          <span>+ Încarcă</span>
                           <input type="file" accept="image/*" onChange={handleAdditionalFileUpload} className="hidden" />
                         </label>
                       </div>
@@ -661,19 +663,19 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
                     <div>
                       <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5 mb-1">
                         <Film className="h-3.5 w-3.5 text-emerald-400" />
-                        Video van de werf (Upload van PC of YouTube URL)
+                        Videoclip de pe Șantier (Încarcă din PC sau URL YouTube)
                       </label>
                       <div className="flex items-center gap-2">
                         <input
                           type="text"
                           value={videoUrl}
                           onChange={(e) => setVideoUrl(e.target.value)}
-                          placeholder="https://www.youtube.com/... of upload video bestand vanaf PC 👉"
+                          placeholder="https://www.youtube.com/... sau încarcă fișier video din PC 👉"
                           className="flex-1 rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
                         />
-                        <label className="cursor-pointer rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-2.5 text-xs font-bold text-emerald-400 hover:bg-emerald-500/20 flex items-center gap-1.5 shrink-0" title="Upload videobestand van PC">
+                        <label className="cursor-pointer rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-2.5 text-xs font-bold text-emerald-400 hover:bg-emerald-500/20 flex items-center gap-1.5 shrink-0" title="Încarcă fișier video din PC">
                           <Upload className="h-4 w-4" />
-                          <span>Upload Video</span>
+                          <span>Încarcă Video</span>
                           <input type="file" accept="video/*" onChange={handleVideoFileUpload} className="hidden" />
                         </label>
                       </div>
@@ -681,26 +683,26 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
                         <div className="mt-2 flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-900 border border-slate-800 text-xs">
                           <span className="text-emerald-400 font-semibold truncate flex items-center gap-1">
                             <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
-                            Video gekoppeld
+                            Videoclip atașat
                           </span>
                           <button
                             type="button"
                             onClick={() => setVideoUrl('')}
                             className="text-rose-400 hover:text-rose-300 text-[11px] font-bold"
                           >
-                            Verwijder video
+                            Șterge video
                           </button>
                         </div>
                       )}
                     </div>
 
                     <div>
-                      <label className="text-xs font-semibold text-slate-300">{t('adminPhotoDesc')}</label>
+                      <label className="text-xs font-semibold text-slate-300">Descriere Scurtă</label>
                       <input
                         type="text"
                         value={newDescription}
                         onChange={(e) => setNewDescription(e.target.value)}
-                        placeholder="Korte toelichting over het project..."
+                        placeholder="Scurtă descriere a proiectului..."
                         className="mt-1 w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
                       />
                     </div>
@@ -708,7 +710,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
                     {newImageUrl && (
                       <div className="h-28 w-44 rounded-xl overflow-hidden border border-slate-700 relative">
                         <img src={newImageUrl} alt="Preview" className="h-full w-full object-cover" />
-                        <span className="absolute bottom-1 right-1 text-[9px] bg-black/80 px-1.5 py-0.5 rounded text-white">Cover Preview</span>
+                        <span className="absolute bottom-1 right-1 text-[9px] bg-black/80 px-1.5 py-0.5 rounded text-white">Previzualizare Copertă</span>
                       </div>
                     )}
 
@@ -717,7 +719,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
                       disabled={isAddingPhoto || !newTitle || !newImageUrl}
                       className="rounded-xl bg-emerald-500 px-5 py-2.5 text-xs font-bold text-slate-950 hover:bg-emerald-400 disabled:opacity-50"
                     >
-                      {t('adminAddPhotoBtn')}
+                      Adaugă Proiect în Galerie
                     </button>
                   </form>
                 </div>
@@ -725,7 +727,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
                 {/* Existing Gallery Items List */}
                 <div className="space-y-3">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                    Bestaande Foto's in Galerij ({galleryItems.length})
+                    Proiecte Existente în Galerie ({galleryItems.length})
                   </h4>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -741,11 +743,13 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
                         />
                         <div className="flex-1 min-w-0">
                           <div className="font-bold text-xs text-white truncate">{item.title}</div>
-                          <div className="text-[10px] text-emerald-400 uppercase font-semibold">{item.category}</div>
+                          <div className="text-[10px] text-emerald-400 uppercase font-semibold">
+                            {item.category === 'windows' ? 'Uși & Ferestre' : item.category === 'interior' ? 'Renovări Interioare' : 'Panouri HSB'}
+                          </div>
                           <div className="text-[10px] text-slate-400 truncate">
                             {item.location}
                             {item.additionalImages && item.additionalImages.length > 0 && (
-                              <span className="ml-1 text-emerald-400">({item.additionalImages.length + 1} foto's)</span>
+                              <span className="ml-1 text-emerald-400">({item.additionalImages.length + 1} fotografii)</span>
                             )}
                             {item.videoUrl && <span className="ml-1 text-rose-400">(Video 🎥)</span>}
                           </div>
@@ -755,14 +759,14 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
                           <button
                             onClick={() => handleStartEditGalleryItem(item)}
                             className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors"
-                            title="Bewerken / Extra Foto's Toevoegen"
+                            title="Editează / Gestionează Fotografii Suplimentare"
                           >
                             <Edit3 className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => handleDeletePhoto(item.id)}
                             className="p-2 rounded-lg bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 transition-colors"
-                            title={t('adminDeleteBtn')}
+                            title="Șterge Proiect"
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
@@ -779,7 +783,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
                       <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                         <h3 className="text-base font-extrabold text-white flex items-center gap-2">
                           <Edit3 className="h-5 w-5 text-emerald-400" />
-                          <span>Project Bewerken & Meerdere Foto's Beheren</span>
+                          <span>Editare Proiect & Gestionează Fotografii</span>
                         </h3>
                         <button
                           type="button"
@@ -793,7 +797,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
                       <form onSubmit={handleSaveEditGalleryItem} className="space-y-4">
                         {/* Title */}
                         <div>
-                          <label className="block text-xs font-semibold text-slate-300 mb-1">Project Titel</label>
+                          <label className="block text-xs font-semibold text-slate-300 mb-1">Titlu Proiect</label>
                           <input
                             type="text"
                             value={editingGalleryItem.title}
@@ -811,15 +815,15 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
                             onChange={(e) => setEditingGalleryItem({ ...editingGalleryItem, category: e.target.value as ServiceCategory })}
                             className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none"
                           >
-                            <option value="windows">Ramen & Deuren</option>
-                            <option value="interior">Interieurrenovatie</option>
-                            <option value="hsb">HSB-panelen</option>
+                            <option value="windows">Uși & Ferestre</option>
+                            <option value="interior">Renovări Interioare</option>
+                            <option value="hsb">Panouri HSB</option>
                           </select>
                         </div>
 
                         {/* Cover Photo */}
                         <div>
-                          <label className="block text-xs font-semibold text-slate-300 mb-1">Hoofdfoto URL (Cover / Glavnaya Foto)</label>
+                          <label className="block text-xs font-semibold text-slate-300 mb-1">URL Foto Principală (Copertă)</label>
                           <div className="flex gap-2">
                             <input
                               type="text"
@@ -830,7 +834,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
                             />
                             <label className="cursor-pointer rounded-xl bg-slate-800 px-3 py-2 text-xs font-bold text-emerald-400 hover:bg-slate-700 flex items-center gap-1.5 shrink-0">
                               <Upload className="h-3.5 w-3.5" />
-                              <span>Upload</span>
+                              <span>Încarcă</span>
                               <input type="file" accept="image/*" onChange={handleEditCoverFileUpload} className="hidden" />
                             </label>
                           </div>
@@ -843,10 +847,10 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
                         <div className="space-y-2 border-t border-slate-800 pt-3">
                           <div className="flex items-center justify-between">
                             <label className="text-xs font-semibold text-emerald-400">
-                              Extra Foto's van het Proces (Meerdere Foto's)
+                              Fotografii Suplimentare de Proces (Mai multe poze)
                             </label>
                             <span className="text-[10px] text-slate-400 font-semibold">
-                              ({(editingGalleryItem.additionalImages || []).length} extra foto's)
+                              ({(editingGalleryItem.additionalImages || []).length} fotografii extra)
                             </span>
                           </div>
 
@@ -863,7 +867,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
                                       setEditingGalleryItem({ ...editingGalleryItem, additionalImages: newArr });
                                     }}
                                     className="absolute top-1 right-1 h-6 w-6 rounded-full bg-rose-500 text-white flex items-center justify-center opacity-90 hover:opacity-100 shadow-md"
-                                    title="Verwijder deze foto"
+                                    title="Șterge această fotografie"
                                   >
                                     <X className="h-3.5 w-3.5" />
                                   </button>
@@ -879,7 +883,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
                           <div className="flex gap-2 pt-1">
                             <input
                               type="text"
-                              placeholder="https://... (Extra Foto URL)"
+                              placeholder="https://... (URL Foto Suplimentară)"
                               value={editAddImgInput}
                               onChange={(e) => setEditAddImgInput(e.target.value)}
                               className="flex-1 rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none"
@@ -897,11 +901,11 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
                               }}
                               className="rounded-xl bg-slate-800 px-3 py-2 text-xs font-bold text-white hover:bg-slate-700"
                             >
-                              + Voeg toe
+                              + Adaugă
                             </button>
                             <label className="cursor-pointer rounded-xl bg-emerald-500/20 border border-emerald-500/30 px-3 py-2 text-xs font-bold text-emerald-400 hover:bg-emerald-500/30 flex items-center gap-1 shrink-0">
                               <Upload className="h-3.5 w-3.5" />
-                              <span>Upload Foto</span>
+                              <span>Încarcă Foto</span>
                               <input type="file" accept="image/*" onChange={handleEditAddImgFileUpload} className="hidden" />
                             </label>
                           </div>
@@ -910,19 +914,19 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
                         {/* Video Upload & URL */}
                         <div>
                           <label className="block text-xs font-semibold text-slate-300 mb-1">
-                            Video van de werf (Upload van PC of YouTube URL)
+                            Videoclip de pe Șantier (Încarcă din PC sau URL YouTube)
                           </label>
                           <div className="flex items-center gap-2">
                             <input
                               type="text"
-                              placeholder="https://www.youtube.com/... of upload video bestand vanaf PC 👉"
+                              placeholder="https://www.youtube.com/... sau încarcă fișier video din PC 👉"
                               value={editingGalleryItem.videoUrl || ''}
                               onChange={(e) => setEditingGalleryItem({ ...editingGalleryItem, videoUrl: e.target.value })}
                               className="flex-1 rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none"
                             />
-                            <label className="cursor-pointer rounded-xl bg-emerald-500/20 border border-emerald-500/30 px-3 py-2 text-xs font-bold text-emerald-400 hover:bg-emerald-500/30 flex items-center gap-1 shrink-0" title="Upload videobestand van PC">
+                            <label className="cursor-pointer rounded-xl bg-emerald-500/20 border border-emerald-500/30 px-3 py-2 text-xs font-bold text-emerald-400 hover:bg-emerald-500/30 flex items-center gap-1 shrink-0" title="Încarcă fișier video din PC">
                               <Upload className="h-3.5 w-3.5" />
-                              <span>Upload Video</span>
+                              <span>Încarcă Video</span>
                               <input type="file" accept="video/*" onChange={handleEditVideoFileUpload} className="hidden" />
                             </label>
                           </div>
@@ -930,14 +934,14 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
                             <div className="mt-2 flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-950 border border-slate-800 text-xs">
                               <span className="text-emerald-400 font-semibold truncate flex items-center gap-1">
                                 <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
-                                Video gekoppeld
+                                Videoclip atașat
                               </span>
                               <button
                                 type="button"
                                 onClick={() => setEditingGalleryItem({ ...editingGalleryItem, videoUrl: '' })}
                                 className="text-rose-400 hover:text-rose-300 text-[11px] font-bold"
                               >
-                                Verwijder video
+                                Șterge video
                               </button>
                             </div>
                           )}
@@ -946,7 +950,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
                         {/* Location & Description */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <div>
-                            <label className="block text-xs font-semibold text-slate-300 mb-1">Locatie</label>
+                            <label className="block text-xs font-semibold text-slate-300 mb-1">Locație</label>
                             <input
                               type="text"
                               value={editingGalleryItem.location || ''}
@@ -955,7 +959,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
                             />
                           </div>
                           <div>
-                            <label className="block text-xs font-semibold text-slate-300 mb-1">Beschrijving</label>
+                            <label className="block text-xs font-semibold text-slate-300 mb-1">Descriere</label>
                             <textarea
                               rows={2}
                               value={editingGalleryItem.description || ''}
@@ -972,14 +976,14 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
                             onClick={() => setEditingGalleryItem(null)}
                             className="rounded-xl bg-slate-800 px-4 py-2 text-xs font-bold text-slate-300 hover:bg-slate-700"
                           >
-                            Annuleren
+                            Anulează
                           </button>
                           <button
                             type="submit"
                             className="rounded-xl bg-emerald-500 px-5 py-2 text-xs font-bold text-slate-950 hover:bg-emerald-400 flex items-center gap-1.5 shadow-lg"
                           >
                             <Save className="h-4 w-4" />
-                            <span>Wijzigingen Opslaan</span>
+                            <span>Salvează Modificările</span>
                           </button>
                         </div>
                       </form>
@@ -998,118 +1002,92 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
                 <div className="rounded-2xl border border-slate-800 bg-slate-950 p-5 space-y-4">
                   <h4 className="text-sm font-bold text-emerald-400 flex items-center gap-2">
                     <Plus className="h-4 w-4" />
-                    {t('adminAddTransformTitle')}
+                    Adaugă Transformare Înainte / După
                   </h4>
 
                   <form onSubmit={handleAddTransformation} className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="text-xs font-semibold text-slate-300">{t('adminPhotoTitle')} *</label>
+                        <label className="text-xs font-semibold text-slate-300">Titlu Transformare *</label>
                         <input
                           type="text"
                           required
                           value={transTitle}
                           onChange={(e) => setTransTitle(e.target.value)}
-                          placeholder="bijv. Vervanging Ramen Huis Antwerpen"
+                          placeholder="ex. Înlocuire Ferestre Casă Anvers"
                           className="mt-1 w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
                         />
                       </div>
 
                       <div>
-                        <label className="text-xs font-semibold text-slate-300">{t('adminPhotoCategory')}</label>
+                        <label className="text-xs font-semibold text-slate-300">Categorie</label>
                         <select
                           value={transCategory}
                           onChange={(e) => setTransCategory(e.target.value as ServiceCategory)}
                           className="mt-1 w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2.5 text-xs text-white focus:border-emerald-500 focus:outline-none"
                         >
-                          <option value="windows">{t('filterWindows')}</option>
-                          <option value="interior">{t('filterInterior')}</option>
-                          <option value="hsb">{t('filterHSB')}</option>
+                          <option value="windows">Uși & Ferestre</option>
+                          <option value="interior">Renovări Interioare</option>
+                          <option value="hsb">Panouri HSB</option>
                         </select>
                       </div>
                     </div>
 
                     {/* BEFORE IMAGE ROW */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-xl border border-rose-500/20 bg-rose-500/5 p-3.5">
-                      <div>
-                        <label className="text-xs font-bold text-rose-400">{t('adminBeforeImageUrl')} *</label>
-                        <div className="mt-1 flex items-center gap-2">
-                          <input
-                            type="text"
-                            value={transBeforeImageUrl}
-                            onChange={(e) => setTransBeforeImageUrl(e.target.value)}
-                            placeholder="https://... of upload bestand 👉"
-                            className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
-                          />
-                          <label className="cursor-pointer rounded-xl border border-slate-700 bg-slate-800 p-2 text-slate-300 hover:text-white shrink-0" title="Upload van PC">
-                            <Upload className="h-4 w-4" />
-                            <input type="file" accept="image/*" onChange={handleBeforeFileUpload} className="hidden" />
-                          </label>
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="text-xs font-semibold text-slate-300">{t('adminBeforeLabelText')}</label>
+                    <div className="rounded-xl border border-rose-500/20 bg-rose-500/5 p-3.5">
+                      <label className="text-xs font-bold text-rose-400">URL Foto ÎNAINTE (VOOR) *</label>
+                      <div className="mt-1 flex items-center gap-2">
                         <input
                           type="text"
-                          value={transBeforeLabel}
-                          onChange={(e) => setTransBeforeLabel(e.target.value)}
-                          placeholder="bijv. Oude Houten Kozijnen"
-                          className="mt-1 w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
+                          value={transBeforeImageUrl}
+                          onChange={(e) => setTransBeforeImageUrl(e.target.value)}
+                          placeholder="https://... sau încarcă fișier 👉"
+                          className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
                         />
+                        <label className="cursor-pointer rounded-xl border border-slate-700 bg-slate-800 p-2 text-slate-300 hover:text-white shrink-0" title="Încarcă din PC">
+                          <Upload className="h-4 w-4" />
+                          <input type="file" accept="image/*" onChange={handleBeforeFileUpload} className="hidden" />
+                        </label>
                       </div>
                     </div>
 
                     {/* AFTER IMAGE ROW */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3.5">
-                      <div>
-                        <label className="text-xs font-bold text-emerald-400">{t('adminAfterImageUrl')} *</label>
-                        <div className="mt-1 flex items-center gap-2">
-                          <input
-                            type="text"
-                            value={transAfterImageUrl}
-                            onChange={(e) => setTransAfterImageUrl(e.target.value)}
-                            placeholder="https://... of upload bestand 👉"
-                            className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
-                          />
-                          <label className="cursor-pointer rounded-xl border border-slate-700 bg-slate-800 p-2 text-slate-300 hover:text-white shrink-0" title="Upload van PC">
-                            <Upload className="h-4 w-4" />
-                            <input type="file" accept="image/*" onChange={handleAfterFileUpload} className="hidden" />
-                          </label>
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="text-xs font-semibold text-slate-300">{t('adminAfterLabelText')}</label>
+                    <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3.5">
+                      <label className="text-xs font-bold text-emerald-400">URL Foto DUPĂ (NA) *</label>
+                      <div className="mt-1 flex items-center gap-2">
                         <input
                           type="text"
-                          value={transAfterLabel}
-                          onChange={(e) => setTransAfterLabel(e.target.value)}
-                          placeholder="bijv. WDS 8S Antraciet Triple"
-                          className="mt-1 w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
+                          value={transAfterImageUrl}
+                          onChange={(e) => setTransAfterImageUrl(e.target.value)}
+                          placeholder="https://... sau încarcă fișier 👉"
+                          className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
                         />
+                        <label className="cursor-pointer rounded-xl border border-slate-700 bg-slate-800 p-2 text-slate-300 hover:text-white shrink-0" title="Încarcă din PC">
+                          <Upload className="h-4 w-4" />
+                          <input type="file" accept="image/*" onChange={handleAfterFileUpload} className="hidden" />
+                        </label>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="text-xs font-semibold text-slate-300">{t('adminPhotoLocation')}</label>
+                        <label className="text-xs font-semibold text-slate-300">Locație</label>
                         <input
                           type="text"
                           value={transLocation}
                           onChange={(e) => setTransLocation(e.target.value)}
-                          placeholder="bijv. Gent, België"
+                          placeholder="ex. Gent, Belgia"
                           className="mt-1 w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
                         />
                       </div>
 
                       <div>
-                        <label className="text-xs font-semibold text-slate-300">{t('adminPhotoDesc')}</label>
+                        <label className="text-xs font-semibold text-slate-300">Descriere</label>
                         <input
                           type="text"
                           value={transDescription}
                           onChange={(e) => setTransDescription(e.target.value)}
-                          placeholder="Korte toelichting over het resultaat..."
+                          placeholder="Scurtă descriere a rezultatului..."
                           className="mt-1 w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
                         />
                       </div>
@@ -1121,7 +1099,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
                         {transBeforeImageUrl && (
                           <div className="h-28 w-40 rounded-xl overflow-hidden border border-rose-500/40 relative bg-slate-900">
                             <img src={transBeforeImageUrl} alt="Before Preview" className="h-full w-full object-cover" />
-                            <span className="absolute bottom-1 left-1 text-[9px] bg-rose-600 px-1.5 py-0.5 rounded font-bold text-white uppercase">Voor</span>
+                            <span className="absolute bottom-1 left-1 text-[9px] bg-rose-600 px-1.5 py-0.5 rounded font-bold text-white uppercase">ÎNAINTE</span>
                           </div>
                         )}
 
@@ -1132,7 +1110,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
                         {transAfterImageUrl && (
                           <div className="h-28 w-40 rounded-xl overflow-hidden border border-emerald-500/40 relative bg-slate-900">
                             <img src={transAfterImageUrl} alt="After Preview" className="h-full w-full object-cover" />
-                            <span className="absolute bottom-1 left-1 text-[9px] bg-emerald-600 px-1.5 py-0.5 rounded font-bold text-white uppercase">Na</span>
+                            <span className="absolute bottom-1 left-1 text-[9px] bg-emerald-600 px-1.5 py-0.5 rounded font-bold text-white uppercase">DUPĂ</span>
                           </div>
                         )}
                       </div>
@@ -1143,7 +1121,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
                       disabled={isAddingTrans || !transTitle || !transBeforeImageUrl || !transAfterImageUrl}
                       className="rounded-xl bg-emerald-500 px-5 py-2.5 text-xs font-bold text-slate-950 hover:bg-emerald-400 disabled:opacity-50"
                     >
-                      {t('adminAddTransformBtn')}
+                      Adaugă Transformare
                     </button>
                   </form>
                 </div>
@@ -1151,12 +1129,12 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
                 {/* Existing Transformations List */}
                 <div className="space-y-3">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                    Bestaande Transformaties ({transformations.length})
+                    Transformări Existente ({transformations.length})
                   </h4>
 
                   {transformations.length === 0 ? (
                     <div className="py-8 text-center text-slate-500 text-xs">
-                      {t('adminNoTransformations')}
+                      Nu există nicio transformare adăugată.
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 gap-4">
@@ -1169,21 +1147,21 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
                           <div className="flex items-center gap-2 shrink-0">
                             <div className="relative h-16 w-20 rounded-xl overflow-hidden border border-slate-800 bg-slate-900">
                               <img src={item.beforeImageUrl} alt="Before" className="h-full w-full object-cover" />
-                              <span className="absolute bottom-0.5 left-0.5 text-[8px] bg-rose-950/90 text-rose-300 px-1 rounded font-bold">VOOR</span>
+                              <span className="absolute bottom-0.5 left-0.5 text-[8px] bg-rose-950/90 text-rose-300 px-1 rounded font-bold">ÎNAINTE</span>
                             </div>
 
                             <ArrowRight className="h-4 w-4 text-emerald-400 shrink-0" />
 
                             <div className="relative h-16 w-20 rounded-xl overflow-hidden border border-slate-800 bg-slate-900">
                               <img src={item.afterImageUrl} alt="After" className="h-full w-full object-cover" />
-                              <span className="absolute bottom-0.5 left-0.5 text-[8px] bg-emerald-950/90 text-emerald-300 px-1 rounded font-bold">NA</span>
+                              <span className="absolute bottom-0.5 left-0.5 text-[8px] bg-emerald-950/90 text-emerald-300 px-1 rounded font-bold">DUPĂ</span>
                             </div>
                           </div>
 
                           <div className="flex-1 min-w-0 space-y-1">
                             <div className="font-bold text-xs text-white truncate">{item.title}</div>
                             <div className="text-[11px] text-emerald-400 font-medium">
-                              {item.beforeLabel || 'Voor'} ➔ {item.afterLabel || 'Na'}
+                              VOOR ➔ NA
                             </div>
                             {item.location && (
                               <div className="text-[10px] text-slate-400">{item.location}</div>
@@ -1193,7 +1171,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
                           <button
                             onClick={() => handleDeleteTransformation(item.id)}
                             className="p-2 rounded-lg bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 transition-colors self-end sm:self-center"
-                            title={t('adminDeleteBtn')}
+                            title="Șterge Transformare"
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
@@ -1211,7 +1189,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
               <div className="space-y-4">
                 {quotes.length === 0 ? (
                   <div className="py-12 text-center text-slate-400 text-xs">
-                    {t('adminNoQuotes')}
+                    Nu există nicio cerere de ofertă primită.
                   </div>
                 ) : (
                   quotes.map((q) => (
@@ -1226,7 +1204,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
                             <span className="text-xs font-semibold text-emerald-400">({q.city || 'Benelux'})</span>
                           </div>
                           <div className="text-xs text-slate-400">
-                            📞 {q.phone} • ✉️ {q.email || 'Geen email'}
+                            📞 {q.phone} • ✉️ {q.email || 'Fără email'}
                           </div>
                         </div>
 
@@ -1236,37 +1214,40 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
                           onChange={(e) => handleUpdateQuoteStatus(q.id, e.target.value)}
                           className="rounded-lg border border-slate-700 bg-slate-900 px-2.5 py-1 text-xs font-semibold text-slate-200"
                         >
-                          <option value="new">{t('adminStatusNew')}</option>
-                          <option value="contacted">{t('adminStatusContacted')}</option>
-                          <option value="scheduled">{t('adminStatusScheduled')}</option>
-                          <option value="completed">{t('adminStatusCompleted')}</option>
+                          <option value="new">🆕 Nouă</option>
+                          <option value="contacted">📞 Contactat</option>
+                          <option value="scheduled">📅 Măsurătoare Programată</option>
+                          <option value="completed">✅ Finalizată</option>
                         </select>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-300">
                         <div>
-                          <span className="text-slate-500">Dienst:</span> <span className="font-bold text-emerald-300">{q.serviceCategory}</span>
+                          <span className="text-slate-500">Serviciu:</span>{' '}
+                          <span className="font-bold text-emerald-300">
+                            {q.serviceCategory === 'windows' ? 'Uși & Ferestre' : q.serviceCategory === 'interior' ? 'Renovări Interioare' : 'Panouri HSB'}
+                          </span>
                         </div>
                         {q.details?.dimensions && (
                           <div>
-                            <span className="text-slate-500">Afmetingen:</span> {q.details.dimensions}
+                            <span className="text-slate-500">Dimensiuni:</span> {q.details.dimensions}
                           </div>
                         )}
                         {q.preferredDate && (
                           <div>
-                            <span className="text-slate-500">Inmeting Datum:</span> {q.preferredDate}
+                            <span className="text-slate-500">Data Măsurătorilor:</span> {q.preferredDate}
                           </div>
                         )}
                         {q.createdAt && (
                           <div className="text-[10px] text-slate-500">
-                            Ontvangen: {new Date(q.createdAt).toLocaleString()}
+                            Primită la: {new Date(q.createdAt).toLocaleString('ro-RO')}
                           </div>
                         )}
                       </div>
 
                       {q.details?.windowProfile && (
                         <div className="rounded-xl bg-slate-900 p-2.5 text-xs text-emerald-400 border border-slate-800">
-                          ⚙️ Configuratie: {q.details.windowProfile} • {q.details.color} • {q.details.glass}
+                          ⚙️ Configurație: {q.details.windowProfile} • {q.details.color} • {q.details.glass}
                         </div>
                       )}
 

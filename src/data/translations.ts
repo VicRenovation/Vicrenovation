@@ -101,8 +101,8 @@ export const translations: Record<Language, Record<string, string>> = {
     // Interactive Before / After
     beforeAfterTitle: 'Voor & Na Transformaties',
     beforeAfterSubtitle: 'Sleep de slider om het resultaat van onze renovaties en ramenvervangingen te zien.',
-    beforeLabel: 'Vooraf',
-    afterLabel: 'Na Renovatie',
+    beforeLabel: 'Voor',
+    afterLabel: 'Na',
 
     // Quote Form & Measurement
     quoteTitle: 'Vraag een Vrijblijvende Offerte & Gratis Inmeting Aan',
@@ -127,7 +127,7 @@ export const translations: Record<Language, Record<string, string>> = {
     adminModalTitle: 'VicRenovation Beheerderspaneel',
     adminLoginPrompt: 'Voer het beheerderswachtwoord in om projecten en offertes te beheren.',
     adminPasswordLabel: 'Wachtwoord',
-    adminPasswordPlaceholder: 'Standaard: vic2026',
+    adminPasswordPlaceholder: 'Wachtwoord',
     adminLoginBtn: 'Inloggen als Beheerder',
     adminWrongPassword: 'Onjuist wachtwoord. Probeer opnieuw.',
     adminTabGallery: 'Galerij Beheren',
@@ -268,7 +268,7 @@ export const translations: Record<Language, Record<string, string>> = {
     beforeAfterTitle: 'Before & After Transformations',
     beforeAfterSubtitle: 'Drag the slider to view the dramatic outcome of our renovation and window upgrade projects.',
     beforeLabel: 'Before',
-    afterLabel: 'After Renovation',
+    afterLabel: 'After',
 
     // Quote Form & Measurement
     quoteTitle: 'Request a Free Quote & On-Site Measurement',
@@ -293,7 +293,7 @@ export const translations: Record<Language, Record<string, string>> = {
     adminModalTitle: 'VicRenovation Admin Dashboard',
     adminLoginPrompt: 'Enter the admin password to manage project gallery and client quote requests.',
     adminPasswordLabel: 'Password',
-    adminPasswordPlaceholder: 'Default: vic2026',
+    adminPasswordPlaceholder: 'Password',
     adminLoginBtn: 'Login as Administrator',
     adminWrongPassword: 'Incorrect password. Please try again.',
     adminTabGallery: 'Manage Gallery',
@@ -433,8 +433,8 @@ export const translations: Record<Language, Record<string, string>> = {
     // Interactive Before / After
     beforeAfterTitle: 'Результаты До и После',
     beforeAfterSubtitle: 'Потяните ползунок, чтобы увидеть трансформацию объектов до и после нашего ремонта.',
-    beforeLabel: 'До Ремонта',
-    afterLabel: 'После Ремонта',
+    beforeLabel: 'До',
+    afterLabel: 'После',
 
     // Quote Form & Measurement
     quoteTitle: 'Запросите Бесплатный Расчёт и Выезд Замерщика',
@@ -459,7 +459,7 @@ export const translations: Record<Language, Record<string, string>> = {
     adminModalTitle: 'Панель Администратора VicRenovation',
     adminLoginPrompt: 'Введите пароль администратора для управления галереей и входящими заявками.',
     adminPasswordLabel: 'Пароль',
-    adminPasswordPlaceholder: 'По умолчанию: vic2026',
+    adminPasswordPlaceholder: 'Введите пароль',
     adminLoginBtn: 'Войти как Админ',
     adminWrongPassword: 'Неверный пароль. Попробуйте еще раз.',
     adminTabGallery: 'Управление Галереей',

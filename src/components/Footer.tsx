@@ -119,7 +119,17 @@ export const Footer: React.FC = () => {
 
         {/* Bottom copyright & scroll top */}
         <div className="pt-8 flex flex-wrap items-center justify-between gap-4 text-xs text-slate-500">
-          <div>{t('footerCopyright')}</div>
+          <div className="flex items-center gap-4">
+            <div>{t('footerCopyright')}</div>
+            <a
+              href="#admin"
+              className="hover:text-slate-300 transition-colors flex items-center gap-1"
+              title="Admin Panel"
+            >
+              <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
+              <span>Admin</span>
+            </a>
+          </div>
 
           <button
             onClick={scrollToTop}

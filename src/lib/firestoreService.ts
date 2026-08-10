@@ -2,6 +2,7 @@ import {
   collection,
   doc,
   getDocs,
+  getDoc,
   setDoc,
   deleteDoc,
   updateDoc,
@@ -13,85 +14,7 @@ import { db } from './firebase';
 import { GalleryItem, TransformationItem, QuoteRequest } from '../types';
 
 // Initial default seed data
-export const INITIAL_GALLERY_DATA: GalleryItem[] = [
-  {
-    id: 'gal_win_1',
-    title: 'WDS 8S Antraciet Ramen Villa',
-    category: 'windows',
-    imageUrl: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80',
-    location: 'Antwerpen, België',
-    year: '2025',
-    description: 'Plaatsing van WDS 8S ramen in RAL 7016 Antraciet met driedubbel A+++ glas.',
-    tags: ['WDS 8S', 'Antraciet', 'Driedubbel Glas'],
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: 'gal_int_1',
-    title: 'Totaalrenovatie Herenhuis & Keuken',
-    category: 'interior',
-    imageUrl: 'https://images.unsplash.com/photo-1600565193348-f74bd3c7ccdf?auto=format&fit=crop&w=1200&q=80',
-    location: 'Gent, België',
-    year: '2025',
-    description: 'Volledige interieurrenovatie met kookeiland, visgraat parket en strak stucwerk.',
-    tags: ['Interieurrenovatie', 'Keuken', 'Visgraat Vloer'],
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: 'gal_hsb_1',
-    title: 'Prefab HSB-Aanbouw Woning met WDS Kozijnen',
-    category: 'hsb',
-    imageUrl: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80',
-    location: 'Breda, Nederland',
-    year: '2025',
-    description: 'Duurzame houtskeletbouw uitbreiding inclusief geïntegreerde WDS kozijnen.',
-    tags: ['HSB-panelen', 'Aanbouw', 'Passiefhuis'],
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: 'gal_win_2',
-    title: 'WDS 7S Panoramische Glasgevel',
-    category: 'windows',
-    imageUrl: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=80',
-    location: 'Brussel, België',
-    year: '2024',
-    description: 'Strakke zwarte WDS 7S gevelramen voor maximale lichtinval.',
-    tags: ['WDS 7S', 'Zwart Mat', 'Panoramaglas'],
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: 'gal_int_2',
-    title: 'Luxe Badkamer Renovatie Inloopdouche',
-    category: 'interior',
-    imageUrl: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=1200&q=80',
-    location: 'Hasselt, België',
-    year: '2025',
-    description: 'Moderne badkamer met grootformaat tegels en maatwerk eiken wastafelmeubel.',
-    tags: ['Badkamer', 'Inloopdouche', 'Tegelwerk'],
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: 'gal_hsb_2',
-    title: 'HSB Dakelementen & Gevelbekleding',
-    category: 'hsb',
-    imageUrl: 'https://images.unsplash.com/photo-1600585152220-90363fe7e115?auto=format&fit=crop&w=1200&q=80',
-    location: 'Eindhoven, Nederland',
-    year: '2024',
-    description: 'Geprefabriceerde geïsoleerde dakelementen en verticale gevelafwerking.',
-    tags: ['HSB', 'Dakelementen', 'Gevelbekleding'],
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: 'gal_win_3',
-    title: 'WDS 6S Light & Energy Renovatie',
-    category: 'windows',
-    imageUrl: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=1200&q=80',
-    location: 'Brugge, België',
-    year: '2024',
-    description: 'Veel lichtinval en uitstekende isolatietechniek met WDS 6S slanke profielen.',
-    tags: ['WDS 6S', 'Lichtinval', 'Klassiek'],
-    createdAt: new Date().toISOString()
-  }
-];
+export const INITIAL_GALLERY_DATA: GalleryItem[] = [];
 
 export const INITIAL_TRANSFORMATIONS_DATA: TransformationItem[] = [
   {
@@ -137,19 +60,16 @@ export async function fetchGalleryFromFirestore(): Promise<GalleryItem[]> {
   try {
     const colRef = collection(db, 'gallery');
     const snapshot = await getDocs(colRef);
-    if (snapshot.empty) {
-      // Seed initial items
-      for (const item of INITIAL_GALLERY_DATA) {
-        await setDoc(doc(db, 'gallery', item.id), item);
-      }
-      return INITIAL_GALLERY_DATA;
-    }
     const items = snapshot.docs.map(doc => doc.data() as GalleryItem);
     return items.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
   } catch (err) {
     console.error('Firestore gallery fetch error, fallback to REST or local:', err);
-    const res = await fetch('/api/gallery');
-    return res.json();
+    try {
+      const res = await fetch('/api/gallery');
+      return await res.json();
+    } catch (e) {
+      return [];
+    }
   }
 }
 
@@ -157,55 +77,73 @@ export async function saveGalleryItemToFirestore(item: GalleryItem): Promise<voi
   try {
     await setDoc(doc(db, 'gallery', item.id), item);
   } catch (err) {
-    console.error('Firestore gallery save error, trying REST API:', err);
+    console.error('Firestore gallery save error:', err);
+  }
+  try {
     await fetch('/api/gallery', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(item),
     });
-  }
+  } catch (e) {}
 }
 
 export async function updateGalleryItemInFirestore(item: GalleryItem): Promise<void> {
   try {
     await setDoc(doc(db, 'gallery', item.id), item, { merge: true });
   } catch (err) {
-    console.error('Firestore gallery update error, trying REST API:', err);
+    console.error('Firestore gallery update error:', err);
+  }
+  try {
     await fetch(`/api/gallery/${item.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(item),
     });
-  }
+  } catch (e) {}
 }
 
 export async function deleteGalleryItemFromFirestore(id: string): Promise<void> {
   try {
     await deleteDoc(doc(db, 'gallery', id));
   } catch (err) {
-    console.error('Firestore gallery delete error, trying REST API:', err);
-    await fetch(`/api/gallery/${id}`, { method: 'DELETE' });
+    console.error('Firestore gallery delete error:', err);
   }
+  try {
+    await fetch(`/api/gallery/${id}`, { method: 'DELETE' });
+  } catch (e) {}
 }
 
 // --- TRANSFORMATIONS ---
 export async function fetchTransformationsFromFirestore(): Promise<TransformationItem[]> {
   try {
     const colRef = collection(db, 'transformations');
-    const snapshot = await getDocs(colRef);
-    if (snapshot.empty) {
-      // Seed initial items
-      for (const item of INITIAL_TRANSFORMATIONS_DATA) {
-        await setDoc(doc(db, 'transformations', item.id), item);
+    const statusRef = doc(db, 'system', 'transformations_status');
+    const statusDoc = await getDoc(statusRef);
+
+    if (!statusDoc.exists()) {
+      // First time initialization in Firestore
+      await setDoc(statusRef, { seeded: true, updatedAt: new Date().toISOString() });
+      const snapshot = await getDocs(colRef);
+      if (snapshot.empty) {
+        for (const item of INITIAL_TRANSFORMATIONS_DATA) {
+          await setDoc(doc(db, 'transformations', item.id), item);
+        }
+        return INITIAL_TRANSFORMATIONS_DATA;
       }
-      return INITIAL_TRANSFORMATIONS_DATA;
     }
+
+    const snapshot = await getDocs(colRef);
     const items = snapshot.docs.map(doc => doc.data() as TransformationItem);
     return items.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
   } catch (err) {
     console.error('Firestore transformations fetch error, fallback to REST:', err);
-    const res = await fetch('/api/transformations');
-    return res.json();
+    try {
+      const res = await fetch('/api/transformations');
+      return await res.json();
+    } catch (e) {
+      return [];
+    }
   }
 }
 
@@ -213,22 +151,26 @@ export async function saveTransformationToFirestore(item: TransformationItem): P
   try {
     await setDoc(doc(db, 'transformations', item.id), item);
   } catch (err) {
-    console.error('Firestore transformation save error, trying REST API:', err);
+    console.error('Firestore transformation save error:', err);
+  }
+  try {
     await fetch('/api/transformations', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(item),
     });
-  }
+  } catch (e) {}
 }
 
 export async function deleteTransformationFromFirestore(id: string): Promise<void> {
   try {
     await deleteDoc(doc(db, 'transformations', id));
   } catch (err) {
-    console.error('Firestore transformation delete error, trying REST API:', err);
-    await fetch(`/api/transformations/${id}`, { method: 'DELETE' });
+    console.error('Firestore transformation delete error:', err);
   }
+  try {
+    await fetch(`/api/transformations/${id}`, { method: 'DELETE' });
+  } catch (e) {}
 }
 
 // --- QUOTES ---

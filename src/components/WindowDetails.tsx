@@ -117,16 +117,21 @@ export const WindowDetails: React.FC = () => {
 
                   <div className="space-y-6 relative z-10">
                     {/* Large High-Res Image Container */}
-                    <div className="relative h-64 sm:h-72 md:h-80 w-full rounded-2xl overflow-hidden border border-slate-800/80 bg-slate-950 shadow-inner group/img">
+                    <div className="relative h-64 sm:h-72 md:h-80 w-full rounded-2xl overflow-hidden border border-slate-800/80 bg-slate-950/80 shadow-inner group/img flex items-center justify-center p-4">
+                      <img
+                        src={currentImg}
+                        alt=""
+                        className="absolute inset-0 h-full w-full object-cover blur-2xl opacity-20 pointer-events-none scale-110"
+                      />
                       <img
                         src={currentImg}
                         alt={profile.name}
-                        className="h-full w-full object-cover group-hover/img:scale-108 group-hover:scale-105 transition-transform duration-700 ease-out"
+                        className="relative max-h-full max-w-full object-contain z-10 group-hover/img:scale-105 transition-transform duration-500 ease-out filter drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)]"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent"></div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-slate-950/20 pointer-events-none z-10"></div>
 
                       {/* Top Badges */}
-                      <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2">
+                      <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2 z-20">
                         <div className="rounded-xl bg-slate-950/85 backdrop-blur-md border border-emerald-500/40 px-3.5 py-1.5 text-xs font-black text-emerald-400 uppercase tracking-wider flex items-center gap-1.5 shadow-lg">
                           <Sparkles className="h-3.5 w-3.5" />
                           <span>{profile.series}</span>
@@ -137,7 +142,7 @@ export const WindowDetails: React.FC = () => {
                       </div>
 
                       {/* Bottom Image Spec Overlay */}
-                      <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-2 text-xs">
+                      <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-2 text-xs z-20">
                         <span className="px-3 py-1.5 rounded-xl bg-slate-950/85 backdrop-blur-md border border-slate-800 text-slate-200 font-extrabold flex items-center gap-1.5">
                           <Layers className="h-3.5 w-3.5 text-emerald-400" />
                           {profile.chambers} Kamers

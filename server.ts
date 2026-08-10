@@ -207,8 +207,7 @@ app.post('/api/upload', upload.single('file'), (req, res) => {
 app.get('/api/gallery', (req, res) => {
   let gallery = readJsonFile(GALLERY_FILE, null);
   if (gallery === null || !Array.isArray(gallery)) {
-    gallery = INITIAL_GALLERY;
-    writeJsonFile(GALLERY_FILE, gallery);
+    gallery = [];
   }
   res.json(gallery);
 });
@@ -349,8 +348,7 @@ app.patch('/api/quotes/:id', (req, res) => {
 app.get('/api/transformations', (req, res) => {
   let transformations = readJsonFile(TRANSFORMATIONS_FILE, null);
   if (transformations === null || !Array.isArray(transformations)) {
-    transformations = INITIAL_TRANSFORMATIONS;
-    writeJsonFile(TRANSFORMATIONS_FILE, transformations);
+    transformations = [];
   }
   res.json(transformations);
 });

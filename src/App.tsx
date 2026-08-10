@@ -26,6 +26,8 @@ export default function App() {
       const hash = window.location.hash.toLowerCase();
       if (path === '/admin' || hash === '#admin') {
         setAdminModalOpen(true);
+        // Clear hash/path from URL so reloads don't force admin modal open
+        window.history.replaceState(null, '', '/');
       }
     };
 
@@ -42,10 +44,7 @@ export default function App() {
 
   const handleCloseAdmin = () => {
     setAdminModalOpen(false);
-    const path = window.location.pathname.toLowerCase().replace(/\/$/, '');
-    if (path === '/admin' || window.location.hash.toLowerCase() === '#admin') {
-      window.history.pushState({}, '', '/');
-    }
+    window.history.replaceState(null, '', '/');
   };
 
   const handleSelectConfigForQuote = (config: {

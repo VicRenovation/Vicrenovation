@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLanguage } from './LanguageContext';
 import { GalleryItem, ServiceCategory } from '../types';
 import { INITIAL_GALLERY } from '../data/initialGallery';
-import { Image as ImageIcon, MapPin, Tag, X, ZoomIn, Sparkles, Filter, Play, Film, Layers, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Image as ImageIcon, X, ZoomIn, Sparkles, Filter, Play, Film, Layers, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface MediaItem {
   type: 'image' | 'video';
@@ -17,9 +17,9 @@ export const Gallery: React.FC = () => {
   const [items, setItems] = useState<GalleryItem[]>(() => {
     try {
       const cached = localStorage.getItem('vr_gallery_cache');
-      return cached ? JSON.parse(cached) : INITIAL_GALLERY;
+      return cached !== null ? JSON.parse(cached) : [];
     } catch (e) {
-      return INITIAL_GALLERY;
+      return [];
     }
   });
   const [selectedCategory, setSelectedCategory] = useState<ServiceCategory | 'all'>('all');
@@ -31,7 +31,7 @@ export const Gallery: React.FC = () => {
     const fetchGallery = async () => {
       try {
         const data = await fetchGalleryFromFirestore();
-        if (Array.isArray(data) && data.length > 0) {
+        if (Array.isArray(data)) {
           setItems(data);
           try {
             localStorage.setItem('vr_gallery_cache', JSON.stringify(data));
@@ -45,7 +45,7 @@ export const Gallery: React.FC = () => {
     };
 
     fetchGallery();
-    const interval = setInterval(fetchGallery, 4000);
+    const interval = setInterval(fetchGallery, 3000);
     return () => clearInterval(interval);
   }, []);
 
@@ -168,8 +168,18 @@ export const Gallery: React.FC = () => {
         </div>
 
         {/* Photo Grid */}
-        <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredItems.map((item) => {
+        {filteredItems.length === 0 ? (
+          <div className="mt-12 py-16 text-center rounded-2xl border border-slate-800/80 bg-slate-900/40 p-8 text-slate-400">
+            <ImageIcon className="h-10 w-10 mx-auto text-slate-600 mb-3" />
+            <p className="text-sm font-semibold">
+              {items.length === 0
+                ? 'Geen projecten gevonden in de galerij.'
+                : 'Geen projecten gevonden in deze categorie.'}
+            </p>
+          </div>
+        ) : (
+          <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredItems.map((item) => {
             const badge = getCategoryBadge(item.category);
             const extraCount = (item.additionalImages?.length || 0) + (item.videoUrl ? 1 : 0);
 
@@ -180,14 +190,19 @@ export const Gallery: React.FC = () => {
                 className="group relative rounded-2xl overflow-hidden border border-slate-800 bg-slate-900 cursor-pointer shadow-xl hover:border-emerald-500/50 transition-all duration-300 hover:-translate-y-1"
               >
                 {/* Image Container */}
-                <div className="h-64 sm:h-72 w-full overflow-hidden relative bg-slate-950">
+                <div className="h-64 sm:h-72 w-full overflow-hidden relative bg-slate-950 flex items-center justify-center">
+                  <img
+                    src={item.imageUrl}
+                    alt=""
+                    className="absolute inset-0 h-full w-full object-cover blur-xl opacity-35 scale-110 pointer-events-none"
+                  />
                   <img
                     src={item.imageUrl}
                     alt={item.title}
-                    className="h-full w-full object-cover group-hover:scale-108 transition-transform duration-700"
+                    className="relative max-h-full max-w-full object-contain z-10 group-hover:scale-105 transition-transform duration-500"
                     loading="lazy"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent opacity-80 group-hover:opacity-60 transition-opacity"></div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent opacity-80 group-hover:opacity-60 transition-opacity z-10 pointer-events-none"></div>
 
                   {/* Badge */}
                   <span className={`absolute top-3 left-3 text-[10px] font-bold px-2.5 py-1 rounded-md border backdrop-blur-md ${badge.color}`}>
@@ -222,38 +237,16 @@ export const Gallery: React.FC = () => {
                     {item.title}
                   </h3>
 
-                  {item.location && (
-                    <p className="text-xs text-slate-400 flex items-center gap-1.5">
-                      <MapPin className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-                      <span>{item.location} {item.year ? `• ${item.year}` : ''}</span>
-                    </p>
-                  )}
-
                   {item.description && (
                     <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed">
                       {item.description}
                     </p>
-                  )}
-
-                  {item.tags && item.tags.length > 0 && (
-                    <div className="pt-2 flex flex-wrap gap-1.5">
-                      {item.tags.map((tag, idx) => (
-                        <span key={idx} className="text-[10px] text-slate-400 bg-slate-800/80 px-2 py-0.5 rounded">
-                          #{tag}
-                        </span>
-                      ))}
-                    </div>
                   )}
                 </div>
               </div>
             );
           })}
         </div>
-
-        {filteredItems.length === 0 && (
-          <div className="py-16 text-center text-slate-400">
-            {t('galleryEmpty')}
-          </div>
         )}
 
       </div>
@@ -379,16 +372,12 @@ export const Gallery: React.FC = () => {
                   <span className={`text-[10px] font-bold px-2.5 py-1 rounded-md border ${getCategoryBadge(activeLightbox.category).color}`}>
                     {getCategoryBadge(activeLightbox.category).label}
                   </span>
-                  {activeLightbox.location && (
-                    <span className="text-xs text-slate-400 flex items-center gap-1">
-                      <MapPin className="h-3.5 w-3.5 text-emerald-400" />
-                      {activeLightbox.location} {activeLightbox.year ? `(${activeLightbox.year})` : ''}
-                    </span>
-                  )}
                 </div>
 
                 <h3 className="text-xl font-extrabold text-white">{activeLightbox.title}</h3>
-                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">{activeLightbox.description}</p>
+                {activeLightbox.description && (
+                  <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">{activeLightbox.description}</p>
+                )}
               </div>
             </div>
           </div>
