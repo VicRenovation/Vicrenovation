@@ -12,6 +12,7 @@ import {
   deleteTransformationFromFirestore,
   fetchQuotesFromFirestore,
   updateQuoteStatusInFirestore,
+  deleteQuoteFromFirestore,
   fetchProfilesFromFirestore,
   saveProfileOverrideToFirestore
 } from '../lib/firestoreService';
@@ -57,6 +58,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
 
   // Transformations state
   const [transformations, setTransformations] = useState<TransformationItem[]>([]);
+  const [editingTransformation, setEditingTransformation] = useState<TransformationItem | null>(null);
   const [transTitle, setTransTitle] = useState('');
   const [transCategory, setTransCategory] = useState<ServiceCategory>('windows');
   const [transBeforeImageUrl, setTransBeforeImageUrl] = useState('');
@@ -154,10 +156,73 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState('');
 
-  // Server File Upload Helper (Uploads images/videos to /api/upload)
+  // Client-side image compression helper to make sure base64 photos are lightweight (~80-120KB)
+  // so they fit inside Firestore (1MB limit) and localStorage (5MB limit) without lag or quota errors on Vercel
+  const compressImageFile = (file: File, maxWidth = 1200, quality = 0.82): Promise<string> => {
+    if (!file.type.startsWith('image/')) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result?.toString() || '');
+        reader.readAsDataURL(file);
+      });
+    }
+
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxWidth || height > maxWidth) {
+            if (width > height) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            } else {
+              width = Math.round((width * maxWidth) / height);
+              height = maxWidth;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            const dataUrl = canvas.toDataURL('image/jpeg', quality);
+            resolve(dataUrl);
+          } else {
+            resolve(e.target?.result?.toString() || '');
+          }
+        };
+        img.onerror = () => resolve(e.target?.result?.toString() || '');
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = () => resolve('');
+      reader.readAsDataURL(file);
+    });
+  };
+
+  // File Upload Helper: compresses images to Data URLs so they are stored directly in Firebase Firestore
   const uploadFileToServer = async (file: File): Promise<string> => {
     setIsUploading(true);
-    setUploadStatus('Se încarcă fișierul pe server...');
+    setUploadStatus('Processing & storing image in Firebase...');
+
+    // For image files, compress client-side and store as Data URL directly in Firestore
+    if (file.type.startsWith('image/')) {
+      try {
+        const compressedDataUrl = await compressImageFile(file, 1200, 0.82);
+        setIsUploading(false);
+        setUploadStatus('');
+        return compressedDataUrl;
+      } catch (e) {
+        console.error('Image compression failed:', e);
+      }
+    }
+
+    // For video or non-image files, upload to server endpoint
     try {
       const formData = new FormData();
       formData.append('file', file);
@@ -167,25 +232,27 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
         body: formData,
       });
 
-      if (!res.ok) {
-        throw new Error(`Încărcare eșuată status ${res.status}`);
+      if (res.ok) {
+        const data = await res.json();
+        setIsUploading(false);
+        setUploadStatus('');
+        return data.url;
       }
+    } catch (err) {
+      console.warn('Server upload failed, falling back to FileReader:', err);
+    }
 
-      const data = await res.json();
+    // Fallback for non-image files
+    try {
+      const dataUrl = await compressImageFile(file, 1200, 0.82);
       setIsUploading(false);
       setUploadStatus('');
-      return data.url;
-    } catch (err) {
-      console.warn('Server upload mislukt, valt terug op FileReader base64:', err);
-      return new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setIsUploading(false);
-          setUploadStatus('');
-          resolve(reader.result?.toString() || '');
-        };
-        reader.readAsDataURL(file);
-      });
+      return dataUrl;
+    } catch (e) {
+      console.error('File processing failed:', e);
+      setIsUploading(false);
+      setUploadStatus('');
+      return '';
     }
   };
 
@@ -421,6 +488,48 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
     }
   };
 
+  const handleStartEditTransformation = (item: TransformationItem) => {
+    setEditingTransformation({ ...item });
+  };
+
+  const handleSaveEditTransformation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTransformation) return;
+
+    try {
+      await saveTransformationToFirestore(editingTransformation);
+      const updatedList = transformations.map((it) => (it.id === editingTransformation.id ? editingTransformation : it));
+      setTransformations(updatedList);
+      try {
+        localStorage.setItem('vr_transformations_cache', JSON.stringify(updatedList));
+      } catch (e) {}
+      setEditingTransformation(null);
+    } catch (err) {
+      console.error('Error updating transformation item:', err);
+      setEditingTransformation(null);
+    }
+  };
+
+  const handleEditTransBeforeFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && editingTransformation) {
+      const url = await uploadFileToServer(file);
+      if (url) {
+        setEditingTransformation((prev) => (prev ? { ...prev, beforeImageUrl: url } : null));
+      }
+    }
+  };
+
+  const handleEditTransAfterFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && editingTransformation) {
+      const url = await uploadFileToServer(file);
+      if (url) {
+        setEditingTransformation((prev) => (prev ? { ...prev, afterImageUrl: url } : null));
+      }
+    }
+  };
+
   const handleUpdateQuoteStatus = async (id: string, status: string) => {
     try {
       await updateQuoteStatusInFirestore(id, status);
@@ -429,6 +538,16 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
       );
     } catch (err) {
       console.error('Error updating quote status in Firestore:', err);
+    }
+  };
+
+  const handleDeleteQuote = async (id: string) => {
+    if (!window.confirm('Ești sigur că dorești să ștergi această cerere de ofertă?')) return;
+    setQuotes((prev) => prev.filter((q) => q.id !== id));
+    try {
+      await deleteQuoteFromFirestore(id);
+    } catch (err) {
+      console.error('Error deleting quote in Firestore:', err);
     }
   };
 
@@ -1168,18 +1287,196 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
                             )}
                           </div>
 
-                          <button
-                            onClick={() => handleDeleteTransformation(item.id)}
-                            className="p-2 rounded-lg bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 transition-colors self-end sm:self-center"
-                            title="Șterge Transformare"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
+                          <div className="flex items-center gap-2 self-end sm:self-center">
+                            <button
+                              onClick={() => handleStartEditTransformation(item)}
+                              className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors"
+                              title="Editează Transformarea"
+                            >
+                              <Edit3 className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteTransformation(item.id)}
+                              className="p-2 rounded-lg bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 transition-colors"
+                              title="Șterge Transformare"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
                   )}
                 </div>
+
+                {/* MODAL FOR EDITING TRANSFORMATION ITEM */}
+                {editingTransformation && (
+                  <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto">
+                    <div className="w-full max-w-2xl rounded-2xl border border-slate-800 bg-slate-900 p-6 space-y-5 shadow-2xl my-8">
+                      <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                        <h3 className="text-base font-bold text-white flex items-center gap-2">
+                          <Edit3 className="h-5 w-5 text-emerald-400" />
+                          <span>Editează Transformarea Înainte / După</span>
+                        </h3>
+                        <button
+                          onClick={() => setEditingTransformation(null)}
+                          className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white"
+                        >
+                          <X className="h-5 w-5" />
+                        </button>
+                      </div>
+
+                      <form onSubmit={handleSaveEditTransformation} className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-xs font-semibold text-slate-300 mb-1">Titlu Transformare *</label>
+                            <input
+                              type="text"
+                              required
+                              value={editingTransformation.title}
+                              onChange={(e) => setEditingTransformation({ ...editingTransformation, title: e.target.value })}
+                              className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2.5 text-xs text-white focus:border-emerald-500 focus:outline-none"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-semibold text-slate-300 mb-1">Categorie</label>
+                            <select
+                              value={editingTransformation.category || 'windows'}
+                              onChange={(e) => setEditingTransformation({ ...editingTransformation, category: e.target.value })}
+                              className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2.5 text-xs text-white focus:border-emerald-500 focus:outline-none"
+                            >
+                              <option value="windows">Uși & Ferestre</option>
+                              <option value="interior">Renovări Interioare</option>
+                              <option value="hsb">Panouri HSB</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        {/* BEFORE IMAGE EDIT ROW */}
+                        <div className="rounded-xl border border-rose-500/20 bg-rose-500/5 p-3.5 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <label className="text-xs font-bold text-rose-400">Foto ÎNAINTE (VOOR)</label>
+                            <input
+                              type="text"
+                              placeholder="Etichetă (ex: Voor)"
+                              value={editingTransformation.beforeLabel || ''}
+                              onChange={(e) => setEditingTransformation({ ...editingTransformation, beforeLabel: e.target.value })}
+                              className="w-32 rounded-lg border border-slate-800 bg-slate-950 px-2 py-1 text-[11px] text-white focus:border-emerald-500 focus:outline-none"
+                            />
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="text"
+                              value={editingTransformation.beforeImageUrl}
+                              onChange={(e) => setEditingTransformation({ ...editingTransformation, beforeImageUrl: e.target.value })}
+                              placeholder="https://... sau încarcă din PC 👉"
+                              className="flex-1 rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none"
+                            />
+                            <label className="cursor-pointer rounded-xl bg-emerald-500/20 border border-emerald-500/30 px-3 py-2 text-xs font-bold text-emerald-400 hover:bg-emerald-500/30 flex items-center gap-1 shrink-0" title="Încarcă foto nouă">
+                              <Upload className="h-3.5 w-3.5" />
+                              <span>Încarcă Foto</span>
+                              <input type="file" accept="image/*" onChange={handleEditTransBeforeFileUpload} className="hidden" />
+                            </label>
+                          </div>
+                        </div>
+
+                        {/* AFTER IMAGE EDIT ROW */}
+                        <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3.5 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <label className="text-xs font-bold text-emerald-400">Foto DUPĂ (NA)</label>
+                            <input
+                              type="text"
+                              placeholder="Etichetă (ex: Na)"
+                              value={editingTransformation.afterLabel || ''}
+                              onChange={(e) => setEditingTransformation({ ...editingTransformation, afterLabel: e.target.value })}
+                              className="w-32 rounded-lg border border-slate-800 bg-slate-950 px-2 py-1 text-[11px] text-white focus:border-emerald-500 focus:outline-none"
+                            />
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="text"
+                              value={editingTransformation.afterImageUrl}
+                              onChange={(e) => setEditingTransformation({ ...editingTransformation, afterImageUrl: e.target.value })}
+                              placeholder="https://... sau încarcă din PC 👉"
+                              className="flex-1 rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none"
+                            />
+                            <label className="cursor-pointer rounded-xl bg-emerald-500/20 border border-emerald-500/30 px-3 py-2 text-xs font-bold text-emerald-400 hover:bg-emerald-500/30 flex items-center gap-1 shrink-0" title="Încarcă foto nouă">
+                              <Upload className="h-3.5 w-3.5" />
+                              <span>Încarcă Foto</span>
+                              <input type="file" accept="image/*" onChange={handleEditTransAfterFileUpload} className="hidden" />
+                            </label>
+                          </div>
+                        </div>
+
+                        {/* Previews */}
+                        <div className="flex items-center justify-center gap-4 py-2 bg-slate-950 rounded-xl border border-slate-800 p-3">
+                          {editingTransformation.beforeImageUrl && (
+                            <div className="h-28 w-40 rounded-xl overflow-hidden border border-rose-500/40 relative bg-slate-900">
+                              <img src={editingTransformation.beforeImageUrl} alt="Before Preview" className="h-full w-full object-cover" />
+                              <span className="absolute bottom-1 left-1 text-[9px] bg-rose-600 px-1.5 py-0.5 rounded font-bold text-white uppercase">
+                                {editingTransformation.beforeLabel || 'ÎNAINTE'}
+                              </span>
+                            </div>
+                          )}
+
+                          {editingTransformation.beforeImageUrl && editingTransformation.afterImageUrl && (
+                            <ArrowRight className="h-5 w-5 text-emerald-400 shrink-0" />
+                          )}
+
+                          {editingTransformation.afterImageUrl && (
+                            <div className="h-28 w-40 rounded-xl overflow-hidden border border-emerald-500/40 relative bg-slate-900">
+                              <img src={editingTransformation.afterImageUrl} alt="After Preview" className="h-full w-full object-cover" />
+                              <span className="absolute bottom-1 left-1 text-[9px] bg-emerald-600 px-1.5 py-0.5 rounded font-bold text-white uppercase">
+                                {editingTransformation.afterLabel || 'DUPĂ'}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Location & Description */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs font-semibold text-slate-300 mb-1">Locație</label>
+                            <input
+                              type="text"
+                              value={editingTransformation.location || ''}
+                              onChange={(e) => setEditingTransformation({ ...editingTransformation, location: e.target.value })}
+                              className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-semibold text-slate-300 mb-1">Descriere</label>
+                            <textarea
+                              rows={2}
+                              value={editingTransformation.description || ''}
+                              onChange={(e) => setEditingTransformation({ ...editingTransformation, description: e.target.value })}
+                              className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex justify-end gap-2 border-t border-slate-800 pt-3">
+                          <button
+                            type="button"
+                            onClick={() => setEditingTransformation(null)}
+                            className="rounded-xl bg-slate-800 px-4 py-2 text-xs font-bold text-slate-300 hover:bg-slate-700"
+                          >
+                            Anulează
+                          </button>
+                          <button
+                            type="submit"
+                            className="rounded-xl bg-emerald-500 px-5 py-2 text-xs font-bold text-slate-950 hover:bg-emerald-400 flex items-center gap-1.5 shadow-lg"
+                          >
+                            <Save className="h-4 w-4" />
+                            <span>Salvează Modificările</span>
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                )}
 
               </div>
             )}
@@ -1187,6 +1484,26 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
             {/* TAB 4: QUOTES MANAGER */}
             {activeTab === 'quotes' && (
               <div className="space-y-4">
+                {quotes.length > 0 && (
+                  <div className="flex justify-between items-center text-xs text-slate-400 bg-slate-950 p-3 rounded-xl border border-slate-800">
+                    <span>Total cereri: <strong className="text-white">{quotes.length}</strong></span>
+                    <button
+                      onClick={async () => {
+                        if (window.confirm('Ștergi TOATE cererile de ofertă?')) {
+                          for (const q of quotes) {
+                            await deleteQuoteFromFirestore(q.id);
+                          }
+                          setQuotes([]);
+                        }
+                      }}
+                      className="px-3 py-1.5 rounded-lg bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white transition-colors flex items-center gap-1.5 text-xs font-semibold"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      <span>Șterge Toate Cererile</span>
+                    </button>
+                  </div>
+                )}
+
                 {quotes.length === 0 ? (
                   <div className="py-12 text-center text-slate-400 text-xs">
                     Nu există nicio cerere de ofertă primită.
@@ -1208,17 +1525,28 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
                           </div>
                         </div>
 
-                        {/* Status Select */}
-                        <select
-                          value={q.status}
-                          onChange={(e) => handleUpdateQuoteStatus(q.id, e.target.value)}
-                          className="rounded-lg border border-slate-700 bg-slate-900 px-2.5 py-1 text-xs font-semibold text-slate-200"
-                        >
-                          <option value="new">🆕 Nouă</option>
-                          <option value="contacted">📞 Contactat</option>
-                          <option value="scheduled">📅 Măsurătoare Programată</option>
-                          <option value="completed">✅ Finalizată</option>
-                        </select>
+                        <div className="flex items-center gap-2">
+                          {/* Status Select */}
+                          <select
+                            value={q.status}
+                            onChange={(e) => handleUpdateQuoteStatus(q.id, e.target.value)}
+                            className="rounded-lg border border-slate-700 bg-slate-900 px-2.5 py-1 text-xs font-semibold text-slate-200"
+                          >
+                            <option value="new">🆕 Nouă</option>
+                            <option value="contacted">📞 Contactat</option>
+                            <option value="scheduled">📅 Măsurătoare Programată</option>
+                            <option value="completed">✅ Finalizată</option>
+                          </select>
+
+                          {/* Delete Button */}
+                          <button
+                            onClick={() => handleDeleteQuote(q.id)}
+                            title="Șterge cerere de ofertă"
+                            className="p-1.5 rounded-lg bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white transition-colors"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-300">

@@ -344,6 +344,15 @@ app.patch('/api/quotes/:id', (req, res) => {
   }
 });
 
+// DELETE /api/quotes/:id
+app.delete('/api/quotes/:id', (req, res) => {
+  const { id } = req.params;
+  let quotes = readJsonFile(QUOTES_FILE, []);
+  quotes = quotes.filter((q: any) => q.id !== id);
+  writeJsonFile(QUOTES_FILE, quotes);
+  res.json({ success: true });
+});
+
 // GET /api/transformations
 app.get('/api/transformations', (req, res) => {
   let transformations = readJsonFile(TRANSFORMATIONS_FILE, null);
@@ -355,7 +364,7 @@ app.get('/api/transformations', (req, res) => {
 
 // POST /api/transformations
 app.post('/api/transformations', (req, res) => {
-  const { title, category, beforeImageUrl, afterImageUrl, beforeLabel, afterLabel, description, location } = req.body;
+  const { id, title, category, beforeImageUrl, afterImageUrl, beforeLabel, afterLabel, description, location } = req.body;
   if (!title || !beforeImageUrl || !afterImageUrl) {
     return res.status(400).json({ error: 'Title, beforeImageUrl, and afterImageUrl are required' });
   }
@@ -365,16 +374,36 @@ app.post('/api/transformations', (req, res) => {
     transformations = [];
   }
 
+  if (id) {
+    const existingIndex = transformations.findIndex((item: any) => item.id === id);
+    if (existingIndex !== -1) {
+      const updatedItem = {
+        ...transformations[existingIndex],
+        title,
+        category: category || transformations[existingIndex].category || 'windows',
+        beforeImageUrl,
+        afterImageUrl,
+        beforeLabel: beforeLabel || transformations[existingIndex].beforeLabel || 'Voor',
+        afterLabel: afterLabel || transformations[existingIndex].afterLabel || 'Na',
+        description: description ?? transformations[existingIndex].description ?? '',
+        location: location ?? transformations[existingIndex].location ?? '',
+      };
+      transformations[existingIndex] = updatedItem;
+      writeJsonFile(TRANSFORMATIONS_FILE, transformations);
+      return res.json(updatedItem);
+    }
+  }
+
   const newItem = {
-    id: 'trans_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+    id: id || ('trans_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4)),
     title,
     category: category || 'windows',
     beforeImageUrl,
     afterImageUrl,
-    beforeLabel: beforeLabel || 'Vooraf',
-    afterLabel: afterLabel || 'Na Renovatie',
+    beforeLabel: beforeLabel || 'Voor',
+    afterLabel: afterLabel || 'Na',
     description: description || '',
-    location: location || 'Benelux',
+    location: location || '',
     createdAt: new Date().toISOString(),
   };
 

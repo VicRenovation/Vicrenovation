@@ -11,9 +11,13 @@ export const BeforeAfterSection: React.FC = () => {
   const [transformations, setTransformations] = useState<TransformationItem[]>(() => {
     try {
       const cached = localStorage.getItem('vr_transformations_cache');
-      return cached !== null ? JSON.parse(cached) : [];
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+      return INITIAL_TRANSFORMATIONS;
     } catch (e) {
-      return [];
+      return INITIAL_TRANSFORMATIONS;
     }
   });
   const [selectedIndex, setSelectedIndex] = useState(0);

@@ -214,6 +214,18 @@ export async function updateQuoteStatusInFirestore(id: string, status: string): 
   }
 }
 
+export async function deleteQuoteFromFirestore(id: string): Promise<void> {
+  try {
+    const docRef = doc(db, 'quotes', id);
+    await deleteDoc(docRef);
+  } catch (err) {
+    console.error('Firestore quote delete error, trying REST API:', err);
+  }
+  try {
+    await fetch(`/api/quotes/${id}`, { method: 'DELETE' });
+  } catch (e) {}
+}
+
 // --- PROFILES OVERRIDES ---
 export async function fetchProfilesFromFirestore(): Promise<Record<string, string>> {
   try {

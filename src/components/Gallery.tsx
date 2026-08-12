@@ -17,9 +17,13 @@ export const Gallery: React.FC = () => {
   const [items, setItems] = useState<GalleryItem[]>(() => {
     try {
       const cached = localStorage.getItem('vr_gallery_cache');
-      return cached !== null ? JSON.parse(cached) : [];
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+      return INITIAL_GALLERY;
     } catch (e) {
-      return [];
+      return INITIAL_GALLERY;
     }
   });
   const [selectedCategory, setSelectedCategory] = useState<ServiceCategory | 'all'>('all');
