@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import { LanguageProvider } from './components/LanguageContext';
 import { Header } from './components/Header';
 import { Hero } from './components/Hero';
@@ -69,6 +70,7 @@ export default function App() {
   return (
     <LanguageProvider>
       <div className="min-h-screen bg-slate-950 font-sans text-slate-100 antialiased selection:bg-emerald-500 selection:text-slate-950">
+        <SpeedInsights />
         
         {/* Header Navigation */}
         <Header
