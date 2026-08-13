@@ -17,9 +17,9 @@ export const Gallery: React.FC = () => {
   const [items, setItems] = useState<GalleryItem[]>(() => {
     try {
       const cached = localStorage.getItem('vr_gallery_cache');
-      if (cached) {
+      if (cached !== null) {
         const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) return parsed;
       }
       return INITIAL_GALLERY;
     } catch (e) {

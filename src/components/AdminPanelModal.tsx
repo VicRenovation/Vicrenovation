@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from './LanguageContext';
 import { GalleryItem, QuoteRequest, ServiceCategory, TransformationItem } from '../types';
-import { Lock, X, Plus, Trash2, Image as ImageIcon, FileText, AlertCircle, Upload, Shield, SlidersHorizontal, ArrowRight, Layers, Film, CheckCircle2, Edit3, Save } from 'lucide-react';
+import { Lock, X, Plus, Trash2, Image as ImageIcon, FileText, AlertCircle, Upload, Shield, SlidersHorizontal, ArrowRight, Layers, Film, CheckCircle2, Edit3, Save, Sparkles } from 'lucide-react';
 import {
   fetchGalleryFromFirestore,
   saveGalleryItemToFirestore,
@@ -205,24 +205,25 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
     });
   };
 
-  // File Upload Helper: compresses images to Data URLs so they are stored directly in Firebase Firestore
+  // File Upload Helper: compresses images to compact permanent Data URLs stored in Firestore
   const uploadFileToServer = async (file: File): Promise<string> => {
     setIsUploading(true);
-    setUploadStatus('Processing & storing image in Firebase...');
+    setUploadStatus('Optimizare și salvare imagine...');
 
-    // For image files, compress client-side and store as Data URL directly in Firestore
-    if (file.type.startsWith('image/')) {
+    // 1. For image files: compress to compact Data URL so it is stored permanently in Cloud Firestore.
+    // This ensures photos NEVER disappear when the server or container restarts!
+    if (file.type.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif|heic|bmp)$/i.test(file.name)) {
       try {
-        const compressedDataUrl = await compressImageFile(file, 1200, 0.82);
+        const compressedDataUrl = await compressImageFile(file, 850, 0.65);
         setIsUploading(false);
         setUploadStatus('');
-        return compressedDataUrl;
+        if (compressedDataUrl) return compressedDataUrl;
       } catch (e) {
-        console.error('Image compression failed:', e);
+        console.error('Image compression failed, falling back to server upload:', e);
       }
     }
 
-    // For video or non-image files, upload to server endpoint
+    // 2. For video or non-image files, upload to server endpoint
     try {
       const formData = new FormData();
       formData.append('file', file);
@@ -239,21 +240,29 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
         return data.url;
       }
     } catch (err) {
-      console.warn('Server upload failed, falling back to FileReader:', err);
+      console.warn('Server upload endpoint failed:', err);
     }
 
-    // Fallback for non-image files
-    try {
-      const dataUrl = await compressImageFile(file, 1200, 0.82);
-      setIsUploading(false);
-      setUploadStatus('');
-      return dataUrl;
-    } catch (e) {
-      console.error('File processing failed:', e);
-      setIsUploading(false);
-      setUploadStatus('');
-      return '';
+    setIsUploading(false);
+    setUploadStatus('');
+    return '';
+  };
+
+  // Upload multiple files helper
+  const uploadMultipleFilesToServer = async (files: FileList | File[]): Promise<string[]> => {
+    setIsUploading(true);
+    const urls: string[] = [];
+    const fileArray = Array.from(files);
+
+    for (let i = 0; i < fileArray.length; i++) {
+      setUploadStatus(`Se încarcă fotografia ${i + 1} din ${fileArray.length}...`);
+      const url = await uploadFileToServer(fileArray[i]);
+      if (url) urls.push(url);
     }
+
+    setIsUploading(false);
+    setUploadStatus('');
+    return urls;
   };
 
   // Image File Upload Helper for Gallery Cover
@@ -265,12 +274,14 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
     }
   };
 
-  // Image File Upload Helper for Additional Process Photos
+  // Image File Upload Helper for Additional Process Photos (Supports multiple files!)
   const handleAdditionalFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const url = await uploadFileToServer(file);
-      if (url) setAdditionalImages((prev) => [...prev, url]);
+    if (e.target.files && e.target.files.length > 0) {
+      const urls = await uploadMultipleFilesToServer(e.target.files);
+      if (urls.length > 0) {
+        setAdditionalImages((prev) => [...prev, ...urls]);
+      }
+      e.target.value = '';
     }
   };
 
@@ -319,7 +330,10 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
   // Handle Add Gallery Photo
   const handleAddPhoto = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTitle || !newImageUrl) return;
+    if (!newTitle || !newImageUrl) {
+      alert('Vă rugăm să introduceți titlul și fotografia principală (sau să încărcați o imagine).');
+      return;
+    }
 
     setIsAddingPhoto(true);
 
@@ -328,11 +342,11 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
       title: newTitle,
       category: newCategory,
       imageUrl: newImageUrl,
-      additionalImages,
-      videoUrl,
+      additionalImages: additionalImages || [],
+      videoUrl: videoUrl || '',
       location: newLocation || 'Benelux',
       year: new Date().getFullYear().toString(),
-      description: newDescription,
+      description: newDescription || '',
       tags: ['Nieuw'],
       createdAt: new Date().toISOString(),
     };
@@ -437,16 +451,16 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
   };
 
   const handleEditAddImgFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && editingGalleryItem) {
-      const url = await uploadFileToServer(file);
-      if (url) {
+    if (e.target.files && e.target.files.length > 0 && editingGalleryItem) {
+      const urls = await uploadMultipleFilesToServer(e.target.files);
+      if (urls.length > 0) {
         setEditingGalleryItem((prev) => {
           if (!prev) return null;
           const current = prev.additionalImages || [];
-          return { ...prev, additionalImages: [...current, url] };
+          return { ...prev, additionalImages: [...current, ...urls] };
         });
       }
+      e.target.value = '';
     }
   };
 
@@ -712,11 +726,20 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
                             placeholder="https://... sau încarcă fișier 👉"
                             className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
                           />
-                          <label className="cursor-pointer rounded-xl border border-slate-700 bg-slate-800 p-2.5 text-slate-300 hover:text-white" title="Încarcă din PC">
+                          <label className="cursor-pointer rounded-xl border border-slate-700 bg-slate-800 p-2.5 text-slate-300 hover:text-white shrink-0" title="Încarcă din PC">
                             <Upload className="h-4 w-4" />
                             <input type="file" accept="image/*" onChange={handleGalleryFileUpload} className="hidden" />
                           </label>
                         </div>
+                        {newImageUrl && (
+                          <div className="mt-2 flex items-center gap-3 bg-slate-900 p-2 rounded-xl border border-slate-800">
+                            <img src={newImageUrl} alt="Preview" className="h-16 w-24 object-cover rounded-lg border border-slate-700 shrink-0" />
+                            <div className="text-[11px] text-emerald-400 font-bold flex items-center gap-1">
+                              <Sparkles className="h-3.5 w-3.5" />
+                              <span>Foto pregătită pentru salvare!</span>
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                       <div>
@@ -755,8 +778,8 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
                         </button>
                         <label className="cursor-pointer rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-xs text-slate-300 hover:text-white flex items-center gap-1 shrink-0">
                           <Upload className="h-3.5 w-3.5" />
-                          <span>+ Încarcă</span>
-                          <input type="file" accept="image/*" onChange={handleAdditionalFileUpload} className="hidden" />
+                          <span>+ Încarcă Poze</span>
+                          <input type="file" accept="image/*" multiple onChange={handleAdditionalFileUpload} className="hidden" />
                         </label>
                       </div>
 
@@ -1024,8 +1047,8 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({ isOpen, onClos
                             </button>
                             <label className="cursor-pointer rounded-xl bg-emerald-500/20 border border-emerald-500/30 px-3 py-2 text-xs font-bold text-emerald-400 hover:bg-emerald-500/30 flex items-center gap-1 shrink-0">
                               <Upload className="h-3.5 w-3.5" />
-                              <span>Încarcă Foto</span>
-                              <input type="file" accept="image/*" onChange={handleEditAddImgFileUpload} className="hidden" />
+                              <span>Încarcă Poze</span>
+                              <input type="file" accept="image/*" multiple onChange={handleEditAddImgFileUpload} className="hidden" />
                             </label>
                           </div>
                         </div>

@@ -11,9 +11,9 @@ export const BeforeAfterSection: React.FC = () => {
   const [transformations, setTransformations] = useState<TransformationItem[]>(() => {
     try {
       const cached = localStorage.getItem('vr_transformations_cache');
-      if (cached) {
+      if (cached !== null) {
         const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) return parsed;
       }
       return INITIAL_TRANSFORMATIONS;
     } catch (e) {

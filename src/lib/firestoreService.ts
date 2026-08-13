@@ -13,8 +13,21 @@ import {
 import { db } from './firebase';
 import { GalleryItem, TransformationItem, QuoteRequest } from '../types';
 
+import { INITIAL_GALLERY } from '../data/initialGallery';
+
+// Helper function to remove undefined values from objects before sending to Firestore
+function sanitizeForFirestore<T extends Record<string, any>>(obj: T): T {
+  const sanitized: Record<string, any> = {};
+  for (const [key, val] of Object.entries(obj)) {
+    if (val !== undefined) {
+      sanitized[key] = val;
+    }
+  }
+  return sanitized as T;
+}
+
 // Initial default seed data
-export const INITIAL_GALLERY_DATA: GalleryItem[] = [];
+export const INITIAL_GALLERY_DATA: GalleryItem[] = INITIAL_GALLERY;
 
 export const INITIAL_TRANSFORMATIONS_DATA: TransformationItem[] = [
   {
@@ -59,6 +72,21 @@ export const INITIAL_TRANSFORMATIONS_DATA: TransformationItem[] = [
 export async function fetchGalleryFromFirestore(): Promise<GalleryItem[]> {
   try {
     const colRef = collection(db, 'gallery');
+    const statusRef = doc(db, 'system', 'gallery_status');
+    const statusDoc = await getDoc(statusRef);
+
+    if (!statusDoc.exists()) {
+      // First time initialization in Firestore
+      await setDoc(statusRef, { seeded: true, updatedAt: new Date().toISOString() });
+      const snapshot = await getDocs(colRef);
+      if (snapshot.empty) {
+        for (const item of INITIAL_GALLERY_DATA) {
+          await setDoc(doc(db, 'gallery', item.id), sanitizeForFirestore(item));
+        }
+        return INITIAL_GALLERY_DATA;
+      }
+    }
+
     const snapshot = await getDocs(colRef);
     const items = snapshot.docs.map(doc => doc.data() as GalleryItem);
     return items.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
@@ -66,7 +94,8 @@ export async function fetchGalleryFromFirestore(): Promise<GalleryItem[]> {
     console.error('Firestore gallery fetch error, fallback to REST or local:', err);
     try {
       const res = await fetch('/api/gallery');
-      return await res.json();
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
     } catch (e) {
       return [];
     }
@@ -74,8 +103,22 @@ export async function fetchGalleryFromFirestore(): Promise<GalleryItem[]> {
 }
 
 export async function saveGalleryItemToFirestore(item: GalleryItem): Promise<void> {
+  const cleanItem = sanitizeForFirestore({
+    id: item.id,
+    title: item.title || '',
+    category: item.category || 'windows',
+    imageUrl: item.imageUrl || '',
+    additionalImages: item.additionalImages || [],
+    videoUrl: item.videoUrl || '',
+    location: item.location || '',
+    year: item.year || new Date().getFullYear().toString(),
+    description: item.description || '',
+    tags: item.tags || [],
+    createdAt: item.createdAt || new Date().toISOString()
+  });
+
   try {
-    await setDoc(doc(db, 'gallery', item.id), item);
+    await setDoc(doc(db, 'gallery', cleanItem.id), cleanItem);
   } catch (err) {
     console.error('Firestore gallery save error:', err);
   }
@@ -83,22 +126,36 @@ export async function saveGalleryItemToFirestore(item: GalleryItem): Promise<voi
     await fetch('/api/gallery', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(item),
+      body: JSON.stringify(cleanItem),
     });
   } catch (e) {}
 }
 
 export async function updateGalleryItemInFirestore(item: GalleryItem): Promise<void> {
+  const cleanItem = sanitizeForFirestore({
+    id: item.id,
+    title: item.title || '',
+    category: item.category || 'windows',
+    imageUrl: item.imageUrl || '',
+    additionalImages: item.additionalImages || [],
+    videoUrl: item.videoUrl || '',
+    location: item.location || '',
+    year: item.year || new Date().getFullYear().toString(),
+    description: item.description || '',
+    tags: item.tags || [],
+    createdAt: item.createdAt || new Date().toISOString()
+  });
+
   try {
-    await setDoc(doc(db, 'gallery', item.id), item, { merge: true });
+    await setDoc(doc(db, 'gallery', cleanItem.id), cleanItem, { merge: true });
   } catch (err) {
     console.error('Firestore gallery update error:', err);
   }
   try {
-    await fetch(`/api/gallery/${item.id}`, {
+    await fetch(`/api/gallery/${cleanItem.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(item),
+      body: JSON.stringify(cleanItem),
     });
   } catch (e) {}
 }
