@@ -67,33 +67,33 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAdmin, onOpenQuote }) => {
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-slate-900 text-white shadow-xl">
+    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md text-slate-900 shadow-sm border-b border-slate-200/80">
       {/* Top Bar */}
-      <div className="border-b border-slate-800 bg-slate-950/80 px-4 py-2 text-xs text-slate-300">
+      <div className="border-b border-slate-200 bg-slate-50 px-4 py-2 text-xs text-slate-600">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-4">
-            <a href="tel:+31618886511" className="flex items-center gap-1.5 hover:text-white transition-colors">
-              <Phone className="h-3.5 w-3.5 text-emerald-400" />
+            <a href="tel:+31618886511" className="flex items-center gap-1.5 hover:text-emerald-700 transition-colors font-medium">
+              <Phone className="h-3.5 w-3.5 text-emerald-600" />
               +31 6 18886511
             </a>
-            <span className="hidden md:inline-block text-slate-500">|</span>
-            <a href="mailto:info@vicrenovation.com" className="hidden md:flex items-center gap-1.5 hover:text-white transition-colors">
-              <Mail className="h-3.5 w-3.5 text-emerald-400" />
-              info@vicrenovation.com
+            <span className="hidden md:inline-block text-slate-300">|</span>
+            <a href="mailto:info@vicrenovation.nl" className="hidden md:flex items-center gap-1.5 hover:text-emerald-700 transition-colors font-medium">
+              <Mail className="h-3.5 w-3.5 text-emerald-600" />
+              info@vicrenovation.nl
             </a>
           </div>
 
           <div className="flex items-center gap-3 ml-auto">
             {/* Language Switcher */}
-            <div className="flex items-center rounded-lg bg-slate-800/80 p-0.5 border border-slate-700">
+            <div className="flex items-center rounded-lg bg-white p-0.5 border border-slate-200 shadow-xs">
               {languages.map((lang) => (
                 <button
                   key={lang.code}
                   onClick={() => setLanguage(lang.code)}
                   className={`flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-md transition-all ${
                     language === lang.code
-                      ? 'bg-emerald-500 text-slate-950 shadow-sm'
-                      : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
+                      ? 'bg-emerald-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                   title={lang.label}
                 >
@@ -121,7 +121,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAdmin, onOpenQuote }) => {
         </div>
 
         {/* Desktop Nav Links */}
-        <nav className="hidden lg:flex items-center gap-2 text-sm font-medium text-slate-200">
+        <nav className="hidden lg:flex items-center gap-2 text-sm font-medium text-slate-700">
           {navItems.map((item) => {
             const isActive = activeSection === item.id;
             return (
@@ -130,12 +130,12 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAdmin, onOpenQuote }) => {
                 onClick={() => scrollToSection(item.id)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all duration-200 ${
                   isActive
-                    ? 'text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/30 shadow-sm shadow-emerald-500/10'
-                    : 'text-slate-300 font-medium hover:text-white hover:bg-slate-800/50'
+                    ? 'text-emerald-700 font-bold bg-emerald-50 border border-emerald-200/80 shadow-xs'
+                    : 'text-slate-600 font-medium hover:text-slate-900 hover:bg-slate-100'
                 }`}
               >
                 {isActive && (
-                  <span className="inline-block h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                  <span className="inline-block h-2 w-2 rounded-full bg-emerald-600 animate-pulse"></span>
                 )}
                 <span>{item.label}</span>
               </button>
@@ -147,7 +147,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAdmin, onOpenQuote }) => {
         <div className="hidden lg:flex items-center gap-3">
           <button
             onClick={onOpenQuote}
-            className="flex items-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 px-5 py-2.5 text-sm font-black text-slate-950 shadow-lg shadow-emerald-500/25 active:scale-98 transition-all"
+            className="flex items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 px-5 py-2.5 text-sm font-black text-white shadow-md shadow-emerald-600/20 active:scale-98 transition-all"
           >
             {t('btnQuote')}
             <ArrowRight className="h-4 w-4" />
@@ -157,7 +157,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAdmin, onOpenQuote }) => {
         {/* Mobile Menu Toggle */}
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="lg:hidden p-2 text-slate-300 hover:text-white"
+          className="lg:hidden p-2 text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100"
         >
           {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
         </button>
@@ -165,8 +165,8 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAdmin, onOpenQuote }) => {
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="lg:hidden border-t border-slate-800 bg-slate-950 px-4 py-6 space-y-4 animate-in slide-in-from-top-2">
-          <div className="flex flex-col gap-2 font-medium text-slate-200">
+        <div className="lg:hidden border-t border-slate-200 bg-white px-4 py-6 space-y-4 animate-in slide-in-from-top-2 shadow-xl">
+          <div className="flex flex-col gap-2 font-medium text-slate-700">
             {navItems.map((item) => {
               const isActive = activeSection === item.id;
               return (
@@ -175,13 +175,13 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAdmin, onOpenQuote }) => {
                   onClick={() => scrollToSection(item.id)}
                   className={`text-left py-2.5 px-3 rounded-xl transition-all flex items-center justify-between ${
                     isActive
-                      ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-bold'
-                      : 'text-slate-300 hover:text-white hover:bg-slate-900 font-medium'
+                      ? 'bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-medium'
                   }`}
                 >
                   <span>{item.label}</span>
                   {isActive && (
-                    <span className="inline-block h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span className="inline-block h-2 w-2 rounded-full bg-emerald-600 animate-pulse"></span>
                   )}
                 </button>
               );
@@ -194,7 +194,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAdmin, onOpenQuote }) => {
                 setMobileMenuOpen(false);
                 onOpenQuote();
               }}
-              className="w-full py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 font-extrabold text-slate-950 text-center shadow-lg shadow-emerald-500/20 active:scale-98 transition-all"
+              className="w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 font-extrabold text-white text-center shadow-md shadow-emerald-600/20 active:scale-98 transition-all"
             >
               {t('btnQuote')}
             </button>

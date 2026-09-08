@@ -81,14 +81,63 @@ export async function fetchGalleryFromFirestore(): Promise<GalleryItem[]> {
       const snapshot = await getDocs(colRef);
       if (snapshot.empty) {
         for (const item of INITIAL_GALLERY_DATA) {
-          await setDoc(doc(db, 'gallery', item.id), sanitizeForFirestore(item));
+          await saveGalleryItemToFirestore(item);
         }
         return INITIAL_GALLERY_DATA;
       }
     }
 
     const snapshot = await getDocs(colRef);
-    const items = snapshot.docs.map(doc => doc.data() as GalleryItem);
+    const galleryMap = new Map<string, GalleryItem>();
+
+    snapshot.docs.forEach(d => {
+      const data = d.data() as GalleryItem;
+      galleryMap.set(d.id, {
+        ...data,
+        additionalImages: Array.isArray(data.additionalImages) ? [...data.additionalImages] : []
+      });
+    });
+
+    // Fetch images from gallery_images collection to reconstruct full photos
+    try {
+      const imagesSnap = await getDocs(collection(db, 'gallery_images'));
+      const imagesByProject = new Map<string, { cover?: string; additional: { index: number; url: string }[] }>();
+
+      imagesSnap.docs.forEach(docSnap => {
+        const imgData = docSnap.data();
+        const pid = imgData.projectId;
+        if (!pid) return;
+
+        if (!imagesByProject.has(pid)) {
+          imagesByProject.set(pid, { additional: [] });
+        }
+        const projImages = imagesByProject.get(pid)!;
+
+        if (imgData.type === 'cover' || imgData.index === -1) {
+          if (imgData.url) projImages.cover = imgData.url;
+        } else if (imgData.type === 'additional' || imgData.index >= 0) {
+          if (imgData.url) projImages.additional.push({ index: imgData.index ?? 0, url: imgData.url });
+        }
+      });
+
+      // Merge stored images into project metadata
+      galleryMap.forEach((item, id) => {
+        const extra = imagesByProject.get(id);
+        if (extra) {
+          if (extra.cover) {
+            item.imageUrl = extra.cover;
+          }
+          if (extra.additional.length > 0) {
+            extra.additional.sort((a, b) => a.index - b.index);
+            item.additionalImages = extra.additional.map(a => a.url);
+          }
+        }
+      });
+    } catch (imgErr) {
+      console.warn('Could not fetch gallery_images collection:', imgErr);
+    }
+
+    const items = Array.from(galleryMap.values());
     return items.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
   } catch (err) {
     console.error('Firestore gallery fetch error, fallback to REST or local:', err);
@@ -103,12 +152,16 @@ export async function fetchGalleryFromFirestore(): Promise<GalleryItem[]> {
 }
 
 export async function saveGalleryItemToFirestore(item: GalleryItem): Promise<void> {
-  const cleanItem = sanitizeForFirestore({
+  const mainImageUrl = item.imageUrl || '';
+  const additionalImages = item.additionalImages || [];
+
+  // Metadata document stored in 'gallery' collection. Keep additionalImages empty to keep doc size ~1KB!
+  const metadataItem = sanitizeForFirestore({
     id: item.id,
     title: item.title || '',
     category: item.category || 'windows',
-    imageUrl: item.imageUrl || '',
-    additionalImages: item.additionalImages || [],
+    imageUrl: mainImageUrl.length > 100000 ? '' : mainImageUrl,
+    additionalImages: [],
     videoUrl: item.videoUrl || '',
     location: item.location || '',
     year: item.year || new Date().getFullYear().toString(),
@@ -118,54 +171,85 @@ export async function saveGalleryItemToFirestore(item: GalleryItem): Promise<voi
   });
 
   try {
-    await setDoc(doc(db, 'gallery', cleanItem.id), cleanItem);
+    // 1. Save metadata
+    await setDoc(doc(db, 'gallery', item.id), metadataItem);
+
+    // 2. Save cover image as individual document in gallery_images
+    if (mainImageUrl) {
+      const coverRef = doc(db, 'gallery_images', `${item.id}_cover`);
+      await setDoc(coverRef, {
+        projectId: item.id,
+        url: mainImageUrl,
+        type: 'cover',
+        index: -1,
+        updatedAt: new Date().toISOString()
+      });
+    }
+
+    // 3. Save each additional image as an individual document in gallery_images
+    for (let i = 0; i < additionalImages.length; i++) {
+      const imgUrl = additionalImages[i];
+      if (imgUrl) {
+        const imgRef = doc(db, 'gallery_images', `${item.id}_add_${i}`);
+        await setDoc(imgRef, {
+          projectId: item.id,
+          url: imgUrl,
+          type: 'additional',
+          index: i,
+          updatedAt: new Date().toISOString()
+        });
+      }
+    }
   } catch (err) {
     console.error('Firestore gallery save error:', err);
   }
+
+  // Sync to REST server endpoint
   try {
     await fetch('/api/gallery', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(cleanItem),
+      body: JSON.stringify(item),
     });
   } catch (e) {}
 }
 
 export async function updateGalleryItemInFirestore(item: GalleryItem): Promise<void> {
-  const cleanItem = sanitizeForFirestore({
-    id: item.id,
-    title: item.title || '',
-    category: item.category || 'windows',
-    imageUrl: item.imageUrl || '',
-    additionalImages: item.additionalImages || [],
-    videoUrl: item.videoUrl || '',
-    location: item.location || '',
-    year: item.year || new Date().getFullYear().toString(),
-    description: item.description || '',
-    tags: item.tags || [],
-    createdAt: item.createdAt || new Date().toISOString()
-  });
+  // Save/overwrite metadata and current images
+  await saveGalleryItemToFirestore(item);
 
+  // Clean up any gallery_images documents that are no longer part of this item
   try {
-    await setDoc(doc(db, 'gallery', cleanItem.id), cleanItem, { merge: true });
+    const imagesSnap = await getDocs(collection(db, 'gallery_images'));
+    const validDocIds = new Set<string>();
+    if (item.imageUrl) validDocIds.add(`${item.id}_cover`);
+    (item.additionalImages || []).forEach((_, i) => validDocIds.add(`${item.id}_add_${i}`));
+
+    for (const d of imagesSnap.docs) {
+      if (d.data().projectId === item.id && !validDocIds.has(d.id)) {
+        await deleteDoc(doc(db, 'gallery_images', d.id));
+      }
+    }
   } catch (err) {
-    console.error('Firestore gallery update error:', err);
+    console.error('Error cleaning up gallery_images on update:', err);
   }
-  try {
-    await fetch(`/api/gallery/${cleanItem.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(cleanItem),
-    });
-  } catch (e) {}
 }
 
 export async function deleteGalleryItemFromFirestore(id: string): Promise<void> {
   try {
     await deleteDoc(doc(db, 'gallery', id));
+
+    // Delete all photo documents belonging to this project
+    const imagesSnap = await getDocs(collection(db, 'gallery_images'));
+    for (const d of imagesSnap.docs) {
+      if (d.data().projectId === id) {
+        await deleteDoc(doc(db, 'gallery_images', d.id));
+      }
+    }
   } catch (err) {
     console.error('Firestore gallery delete error:', err);
   }
+
   try {
     await fetch(`/api/gallery/${id}`, { method: 'DELETE' });
   } catch (e) {}

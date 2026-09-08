@@ -68,7 +68,7 @@ export default function App() {
 
   return (
     <LanguageProvider>
-      <div className="min-h-screen bg-slate-950 font-sans text-slate-100 antialiased selection:bg-emerald-500 selection:text-slate-950">
+      <div className="min-h-screen bg-white font-sans text-slate-900 antialiased selection:bg-emerald-600 selection:text-white">
         
         {/* Header Navigation */}
         <Header
