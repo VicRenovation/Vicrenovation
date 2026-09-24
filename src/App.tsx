@@ -10,6 +10,7 @@ import { Gallery } from './components/Gallery';
 import { QuoteSection } from './components/QuoteSection';
 import { AdminPanelModal } from './components/AdminPanelModal';
 import { Footer } from './components/Footer';
+import { PromoFloatingBanner } from './components/PromoFloatingBanner';
 import { WindowProfile, ColorFinish, GlassOption } from './types';
 
 export default function App() {
@@ -104,6 +105,9 @@ export default function App() {
 
         {/* Footer */}
         <Footer />
+
+        {/* Floating Promotional Banner Widget */}
+        <PromoFloatingBanner onOpenQuote={handleOpenQuote} />
 
       </div>
     </LanguageProvider>

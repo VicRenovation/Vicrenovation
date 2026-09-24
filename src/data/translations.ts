@@ -165,6 +165,14 @@ export const translations: Record<Language, Record<string, string>> = {
     footerHours: 'Maandag - Zaterdag: 08:00 - 18:00',
     footerCopyright: '© 2026 VicRenovation. Alle rechten voorbehouden.',
     whatsappBtn: 'WhatsApp Chat',
+
+    // Promo Banner
+    promoBadge: '🔥 Tijdelijke Oktober Actie',
+    promoDiscountBadge: '5% KORTING',
+    promoValidity: 'Geldig t/m 31 oktober',
+    promoTitle: '5% Korting in de Maand Oktober!',
+    promoSubtitle: 'Profiteer de hele maand oktober van 5% korting op WDS-ramen, deuren en complete interieurrenovatie.',
+    promoCta: 'Offerte met 5% Korting',
   },
 
   en: {
@@ -331,6 +339,14 @@ export const translations: Record<Language, Record<string, string>> = {
     footerHours: 'Monday - Saturday: 08:00 - 18:00',
     footerCopyright: '© 2026 VicRenovation. All rights reserved.',
     whatsappBtn: 'WhatsApp Chat',
+
+    // Promo Banner
+    promoBadge: '🔥 Limited October Offer',
+    promoDiscountBadge: '5% DISCOUNT',
+    promoValidity: 'Valid until October 31',
+    promoTitle: '5% Discount Throughout October!',
+    promoSubtitle: 'Take advantage of our 5% October discount on German WDS windows, doors, and full renovations.',
+    promoCta: 'Claim 5% Discount & Quote',
   },
 
   ru: {
@@ -497,5 +513,13 @@ export const translations: Record<Language, Record<string, string>> = {
     footerHours: 'Понедельник - Суббота: 08:00 - 18:00',
     footerCopyright: '© 2026 VicRenovation. Все права защищены.',
     whatsappBtn: 'Чат в WhatsApp',
+
+    // Promo Banner
+    promoBadge: '🔥 Акция Октября',
+    promoDiscountBadge: 'СКИДКА 5%',
+    promoValidity: 'Действует до 31 октября',
+    promoTitle: 'Скидка 5% на Весь Октябрь!',
+    promoSubtitle: 'Только в октябре: получите гарантированную скидку 5% на немецкие окна WDS, двери и ремонт под ключ.',
+    promoCta: 'Получить Скидку 5% и Расчет',
   },
 };
